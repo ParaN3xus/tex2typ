@@ -1,5 +1,5 @@
 
-const fontMapping = {
+export const fontMapping = {
     "mathrm": "upright",
     "mbox": "upright",
     "hbox": "upright",
@@ -12,4 +12,38 @@ const fontMapping = {
     "mathfrak": "frak"
 };
 
-module.exports = fontMapping;
+
+export const mathordMapping = {
+    "\\alpha": "alpha",
+    "\\beta": "beta",
+    "\\gamma": "gamma",
+    "\\delta": "delta",
+    "\\epsilon": "epsilon.alt",
+    "\\zeta": "zeta",
+    "\\eta": "eta",
+    "\\theta": "theta",
+    "\\iota": "iota",
+    "\\kappa": "kappa",
+    "\\lambda": "lambda",
+    "\\mu": "mu",
+    "\\nu": "nu",
+    "\\xi": "xi",
+    "\\omicron": "omicron",
+    "\\pi": "pi",
+    "\\rho": "rho",
+    "\\sigma": "sigma",
+    "\\tau": "tau",
+    "\\upsilon": "upsilon",
+    "\\phi": "phi.alt",
+    "\\chi": "chi",
+    "\\psi": "psi",
+    "\\omega": "omega",
+    "\\varepsilon": "epsilon",
+    "\\varphi": "phi",
+    "\\varpi": "pi.alt",
+    "\\varrho": "rho.alt",
+    "\\varsigma": "sigma.alt",
+    "\\vartheta": "theta.alt",
+    "\\imath": "dotless.i",
+    "\\jmath": "dotless.j",
+}
