@@ -1,0 +1,16 @@
+{
+  "name": "tex2typ",
+  "version": "1.0.0",
+  "description": "latex formula to typst formula",
+  "main": "index.js",
+  "scripts": {
+    "run": "node index.js",
+    "debug": "node index.js",
+    "test": "node index.js"
+  },
+  "author": "paran3xus",
+  "license": "MIT",
+  "dependencies": {
+    "katex": "^0.16.11"
+  }
+}
