@@ -516,3 +516,12 @@ export const punctMapping = {
     "\\cdotp": "dot.c",
     "\\ldotp": "."
 }
+
+export const atomMapping = {
+    ...binMapping,
+    ...closeMapping,
+    ...openMapping,
+    ...innerMapping,
+    ...punctMapping,
+    ...relMapping
+}
