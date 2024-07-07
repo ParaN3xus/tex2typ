@@ -12,7 +12,6 @@ export const fontMapping = {
     "mathfrak": "frak"
 };
 
-
 export const mathordMapping = {
     "\\alpha": "alpha",
     "\\beta": "beta",
@@ -470,4 +469,50 @@ export const binMapping = {
     "\\unlhd": "lt.tri.eq",
     "\\unrhd": "gt.tri.eq",
     "\\veebar": "⊻"
+}
+
+export const closeMapping = {
+    "\\}": "\\}",
+    "\\rvert": "|",
+    "\\rVert": "||",
+    "\\rparen": "paren.r",
+    "\\rceil": "⌉",
+    "\\rfloor": "⌋",
+    "\\rbrack": "bracket.r",
+    "\\rgroup": "⟯",
+    "\\rangle": "angle.r",
+    "\\rbrace": "\\}",
+    "\\lrcorner": "⌟",
+    "\\rmoustache": "⎱",
+    "\\urcorner": "⌝",
+}
+
+
+export const openMapping = {
+    "\\{": "\\{",
+    "\\lvert": "|",
+    "\\lVert": "||",
+    "\\lparen": "paren.l",
+    "\\lceil": "⌈",
+    "\\lfloor": "⌊",
+    "\\lbrack": "bracket.l",
+    "\\lgroup": "⟮",
+    "\\langle": "angle.l",
+    "\\lbrace": "\\{",
+    "\\llcorner": "⌞",
+    "\\lmoustache": "⎰",
+    "\\ulcorner": "⌜"
+}
+
+export const innerMapping = {
+    "\\cdots": "dots.h.c",
+    "\\ldots": "dots.h",
+    "\\ddots": "dots.down",
+    "\\mathellipsis": "...",
+    "\\textellipsis": "..."
+}
+
+export const punctMapping = {
+    "\\cdotp": "dot.c",
+    "\\ldotp": "."
 }
