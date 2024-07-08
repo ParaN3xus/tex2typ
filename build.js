@@ -61,10 +61,21 @@ build_functions.text = function (tree) {
 build_functions.supsub = function (tree) {
     var typ = build_expression(tree.base);
     if (tree.sub) {
-        typ = typ + ` _ ( ${build_expression(tree.sub)} )`;
+        typ += ` _ ( ${build_expression(tree.sub)} )`;
     }
+
     if (tree.sup) {
-        typ = typ + ` ^ ( ${build_expression(tree.sup)} )`;
+
+        // y'
+        if (tree.sup.type === "ordgroup") {
+            const allPrime = tree.sup.body.every(element => element.text === '\\prime');
+            if (allPrime) {
+                typ += " ' ".repeat(tree.sup.body.length);
+                return typ;
+            }
+        }
+
+        typ +=  typ + ` ^ ( ${build_expression(tree.sup)} )`;
     }
     return typ;
 }
