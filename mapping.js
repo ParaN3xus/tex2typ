@@ -472,7 +472,7 @@ export const binMapping = {
 }
 
 export const closeMapping = {
-    "\\}": "\\}",
+    "\\}": "}",
     "\\rvert": "|",
     "\\rVert": "||",
     "\\rparen": "paren.r",
@@ -489,7 +489,7 @@ export const closeMapping = {
 
 
 export const openMapping = {
-    "\\{": "\\{",
+    "\\{": "{",
     "\\lvert": "|",
     "\\lVert": "||",
     "\\lparen": "paren.l",
