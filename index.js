@@ -126,33 +126,50 @@ function build_leftright(tree) {
     var left = tree.left;
     var right = tree.right;
 
-    var left_typ = `"${left}"`;
+    var is_literal_left = false;
+    var left_typ = "";
+    if(left in atomMapping) {
+        left_typ = atomMapping[left];
+    } else {
+        left_typ = left;
+        is_literal_left = true;
+    }
+
+    var is_literal_right = false;
+    var right_typ = "";
+    if(right in atomMapping) {
+        right_typ = atomMapping[right];
+    } else {
+        right_typ = right;
+        is_literal_right = true;
+    }
 
     if (tree.body.length == 1 &&
         tree.body[0].type === "array" &&
         tree.body[0].from === "matrix") {
-        return build_typst_mat(tree.body[0], left_typ)
+        return build_typst_mat(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
     }
+
+    var body_typ = build_expression(tree.body)
 
     // auto lr
     if ((left === '(' && right === ')') ||
         (left === '[' && right === ']') ||
         (left === '{' && right === '}')) {
-        return `${left} ${build_expression(tree.body)} ${right}`;
+        return `${left} ${body_typ} ${right}`;
     } else if (left === '|' && right === '|') {
-        return `abs( ${build_expression(tree.body)} )`;
+        return `abs( ${body_typ} )`;
     } else if (left === '\\|' && right === '\\|') {
-        return `norm( ${build_expression(tree.body)} )`;
+        return `norm( ${body_typ} )`;
     } else if (left === '\\lfloor' && right === '\\rfloor') {
-        return `floor( ${build_expression(tree.body)} )`;
+        return `floor( ${body_typ} )`;
     } else if (left === '\\lceil' && right === '\\rceil') {
-        return `ceil( ${build_expression(tree.body)} )`;
+        return `ceil( ${body_typ} )`;
     } else if (left === '\\lfloor' && right === '\\rceil') {
-        return `round( ${build_expression(tree.body)} )`;
+        return `round( ${body_typ} )`;
     }
     else {
-        // TODO: map lr(open and close) to typst
-        return `lr(  )`
+        return `lr( ${left_typ} ${body_typ} ${right_typ} )`
     }
 }
 
