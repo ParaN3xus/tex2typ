@@ -403,7 +403,7 @@ export const relMapping = {
 }
 
 export const binMapping = {
-    "\\cdot": "dot.c",
+    "\\cdot": "dot",
     "\\times": "times",
     "\\oplus": "plus.circle",
     "\\ominus": "minus.circle",

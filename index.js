@@ -6,7 +6,11 @@ import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
 import { fileURLToPath } from 'url';
 
 function build_atom(tree) {
-    return;
+    if(tree.text in atomMapping) {
+        return atomMapping[tree.text];
+    } else {
+        return tree.text;
+    }
 }
 
 function build_mathord(tree) {
