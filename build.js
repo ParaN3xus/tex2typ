@@ -325,11 +325,11 @@ build_functions.styling = function (tree) {
 }
 
 build_functions.overline = function (tree) {
-    return `overline( ${build_expression(tree)} )`;
+    return `overline( ${build_expression(tree.body)} )`;
 }
 
 build_functions.underline = function (tree) {
-    return `underline( ${build_expression(tree)} )`;
+    return `underline( ${build_expression(tree.body)} )`;
 }
 
 build_functions.xArrow = function (tree) {
