@@ -3,7 +3,7 @@ export const fontMapping = {
     "mathrm": "upright",
     "mbox": "upright",
     "hbox": "upright",
-    "mathbf": "mitexmathbf",
+    //"mathbf": "mitexmathbf",
     "mathit": "italic",
     "mathsf": "sans",
     "mathtt": "mono",

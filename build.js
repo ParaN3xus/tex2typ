@@ -268,6 +268,8 @@ build_functions.font = function (tree) {
 
     if (font in fontMapping) {
         fontCommand = fontMapping[font];
+    } else if (font === "mathbf") {
+        return `bold( upright( ${build_expression(tree.body)} ) )`;
     } else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
         fontCommand = font;
