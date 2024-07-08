@@ -1,7 +1,7 @@
 import katex from 'katex';
 import fs from 'fs';
 import path from 'path';
-import { fontMapping, textordMapping, mathordMapping } from './mapping.js';
+import { fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping } from './mapping.js';
 import { fileURLToPath } from 'url';
 
 function build_atom(tree) {
@@ -155,6 +155,40 @@ function build_leftright(tree) {
     }
 }
 
+function build_accent(tree) {
+    var base_typ = build_expression(tree.base);
+    var label = tree.label;
+    var accent_typ;
+
+    var res;
+
+    if (label in accentMapping) {
+        accent_typ = accentMapping[label];
+        res = `${accent_typ}( ${base_typ} )`;        
+    } else if (label in atomMapping){
+        accent_typ = atomMapping[label];
+        res = `${accent_typ}( ${base_typ} )`;        
+    } else {
+        switch (label) {
+            case "\\bcancel":
+                res = `cancel( inverted: #true , ${base_typ} )`;
+            case "\\sout":
+                res = `cancel( angle: #90deg , ${base_typ} )`;
+            case "\\boxed":
+                res = `#box( stroke: 0.5pt , inset: 6pt , $${base_typ}$ )`;
+            case "\\overgroup":
+                res = `accent( ${base_typ} , \u{0311} )`;
+            case "\\overlinesegment":
+                res = `accent( ${base_typ} , \u{20e9} )`;
+            default:
+                console.warn(`Warning: The accent "${label}" is not recognized.`);
+                res = base_typ
+        }
+    }
+
+    return res;
+}
+
 function build_font(tree) {
     var font = tree.font
     var fontCommand;
@@ -201,7 +235,7 @@ function build_expression(tree) {
             case 'leftright':
                 return build_leftright(tree);
             case 'accent':
-                return;
+                return build_accent(tree);
             case 'spacing':
                 return;
             case 'op':
