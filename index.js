@@ -189,6 +189,29 @@ function build_accent(tree) {
     return res;
 }
 
+function build_kern(tree) {
+    var unit = tree.dimension.unit;
+    var number = tree.dimension.number
+    switch (unit) {
+        case "em":
+            switch (number) {
+                case 1:
+                    return "quad";
+                case 2:
+                    return "wide";
+                default:
+                    return `#v( ${number}em )`;
+            }
+        default:
+            console.warn(`Warning: The unit "${unit}" is not recognized.`);
+    }
+}
+
+function build_spacing(tree) {
+    return "space.nobreak";
+}
+
+
 function build_font(tree) {
     var font = tree.font
     var fontCommand;
@@ -236,8 +259,10 @@ function build_expression(tree) {
                 return build_leftright(tree);
             case 'accent':
                 return build_accent(tree);
+            case 'kern':
+                return build_kern(tree);
             case 'spacing':
-                return;
+                return build_spacing(tree);
             case 'op':
                 return;
             case 'katex':
