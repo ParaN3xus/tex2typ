@@ -1,7 +1,7 @@
 import katex from 'katex';
 import fs from 'fs';
 import path from 'path';
-import { fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping } from './mapping.js';
+import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
 import { fileURLToPath } from 'url';
 
@@ -70,7 +70,7 @@ function build_supsub(tree) {
 function build_genfrac(tree) {
     var numer = build_expression(tree.numer);
     var denom = build_expression(tree.denom);
-    if(tree.hasBarLine) {
+    if (tree.hasBarLine) {
         return `( ${numer} ) / ( ${denom} )`;
     }
     else {
@@ -80,7 +80,7 @@ function build_genfrac(tree) {
 
 function build_sqrt(tree) {
     var body = build_expression(tree.body);
-    if(tree.index) {
+    if (tree.index) {
         var index = build_expression(tree.index);
         return `sqrt( ${index} , ${body} )`;
     }
@@ -100,12 +100,12 @@ function build_typst_mat(array, delim) {
                 body_typ += " , ";
             }
         }
-        if(rindex != body.length - 1) {
+        if (rindex != body.length - 1) {
             body_typ += " ; ";
         }
     }
 
-    if(delim) {
+    if (delim) {
         var delim_typ = `delim: ${delim}`;
         return `mat( ${delim_typ} , ${body_typ} )`;
     }
@@ -165,10 +165,10 @@ function build_accent(tree) {
 
     if (label in accentMapping) {
         accent_typ = accentMapping[label];
-        res = `${accent_typ}( ${base_typ} )`;        
-    } else if (label in atomMapping){
+        res = `${accent_typ}( ${base_typ} )`;
+    } else if (label in atomMapping) {
         accent_typ = atomMapping[label];
-        res = `${accent_typ}( ${base_typ} )`;        
+        res = `${accent_typ}( ${base_typ} )`;
     } else {
         switch (label) {
             case "\\bcancel":
@@ -214,14 +214,14 @@ function build_spacing(tree) {
 
 
 const operators = [
-    "arccos", "arcsin", "arctan", "arg", "cos", "cosh", "cot", "coth", "csc", 
-    "csch", "ctg", "deg", "det", "dim", "exp", "gcd", "hom", "id", "im", "inf", 
-    "ker", "lg", "lim", "liminf", "limsup", "ln", "log", "max", "min", "mod", 
+    "arccos", "arcsin", "arctan", "arg", "cos", "cosh", "cot", "coth", "csc",
+    "csch", "ctg", "deg", "det", "dim", "exp", "gcd", "hom", "id", "im", "inf",
+    "ker", "lg", "lim", "liminf", "limsup", "ln", "log", "max", "min", "mod",
     "Pr", "sec", "sech", "sin", "sinc", "sinh", "sup", "tan", "tanh", "tg", "tr"
 ];
 
 function build_op(tree) {
-    if(tree.name in opMapping) {
+    if (tree.name in opMapping) {
         return opMapping[tree.name];
     }
 
@@ -261,18 +261,18 @@ function build_font(tree) {
     return `${fontCommand}( ${build_expression(tree.body)} )`;
 }
 
-const sizes = [ "1.2em", "1.8em", "2.4em", "3em" ];
+const sizes = ["1.2em", "1.8em", "2.4em", "3em"];
 
 function build_delimsizing(tree) {
     var delim_typ;
-    if(tree.delim in atomMapping) {
+    if (tree.delim in atomMapping) {
         delim_typ = atomMapping[tree.delim];
     } else {
         delim_typ = encodeTypstEscape(decodeLatexEscape(tree.delim));
     }
 
     var size_typ = sizes[tree.size - 1];
-    
+
     return `lr( size: #${size_typ} , ${delim_typ} )`;
 }
 
@@ -291,6 +291,17 @@ function build_overline(tree) {
 
 function build_underline(tree) {
     return `underline( ${build_expression(tree)} )`;
+}
+
+function build_xArrow(tree) {
+    var label_typ;
+    if (tree.label in xArrowMapping) {
+        label_typ = xArrowMapping[tree.label];
+
+        return `${label_typ} ^ ( ${build_expression(tree.body)} )`;
+    }
+
+    console.warn(`Warning: The xArrow "${tree.label}" is not recognized.`)
 }
 
 function build_expression(tree) {
@@ -345,7 +356,7 @@ function build_expression(tree) {
             case 'underline':
                 return build_underline(tree);
             case 'xArrow':
-                return;
+                return build_xArrow(tree);
             case 'rule':
                 return;
             case 'llap':

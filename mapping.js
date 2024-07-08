@@ -614,3 +614,25 @@ export const opMapping = {
     "\\oiint": "integral.surf",
     "\\oiiint": "integral.vol",
 }
+
+export const xArrowMapping = {
+    "\\xleftarrow": "math.arrow.l.long",
+    "\\xrightarrow": "math.arrow.r.long",
+    "\\xLeftarrow": "math.arrow.l.double.long",
+    "\\xRightarrow": "math.arrow.r.double.long",
+    "\\xleftrightarrow": "math.arrow.l.r",
+    "\\xLeftrightarrow": "math.arrow.l.r.double",
+    "\\xhookleftarrow": "math.arrow.l.hook",
+    "\\xhookrightarrow": "math.arrow.r.hook",
+    "\\xtwoheadleftarrow": "math.arrow.l.twohead",
+    "\\xtwoheadrightarrow": "math.arrow.r.twohead",
+    "\\xleftharpoonup": "math.harpoon.lt",
+    "\\xrightharpoonup": "math.harpoon.rt",
+    "\\xleftharpoondown": "math.harpoon.lb",
+    "\\xrightharpoondown": "math.harpoon.rb",
+    "\\xleftrightharpoons": "math.harpoons.ltrb",
+    "\\xrightleftharpoons": "math.harpoons.rtlb",
+    "\\xtofrom": "math.arrows.rl",
+    "\\xmapsto": "math.arrow.r.bar",
+    "\\xlongequal": "math.eq",
+}
