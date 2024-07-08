@@ -1,8 +1,131 @@
-const katex = require('katex');
+import katex from 'katex';
+import fs from 'fs';
+import path from 'path';
+import { fontMapping, textordMapping, mathordMapping } from './mapping.js';
+import { fileURLToPath } from 'url';
 
+function build_atom(tree) {
+    return;
+}
 
 function build_mathord(tree) {
-    if ()
+    var tex = tree.text;
+    var typ;
+
+    if (tex in mathordMapping) {
+        typ = mathordMapping[tex];
+    } else {
+        typ = tex;
+    }
+
+    return typ;
+}
+
+function build_textord(tree) {
+    var tex = tree.text;
+    var typ;
+
+    if (tex in textordMapping) {
+        typ = textordMapping[tex];
+    } else {
+        typ = tex;
+    }
+
+    return typ;
+}
+
+function build_ordgroup(tree) {
+    return tree.body.map(node => build_expression(node)).join(' ');
+}
+
+function build_text(tree) {
+    const allTextord = tree.body.every(element => element.type === 'textord');
+
+    var mergedText;
+    if (allTextord) {
+        mergedText = tree.body.map(element => element.text).join('');
+
+        if (mergedText.length == 1) {
+            return `upright( ${mergedText} )`;
+        } else {
+            return `"${mergedText}"`;
+        }
+    } else {
+        return tree.body.map(node => build_expression(node)).join(' ');
+    }
+}
+
+function build_supsub(tree) {
+    var typ = build_expression(tree.base);
+    if (tree.sub) {
+        typ = typ + ` _ ( ${build_expression(tree.sub)} )`;
+    }
+    if (tree.sup) {
+        typ = typ + ` ^ ( ${build_expression(tree.sup)} )`;
+    }
+    return typ;
+}
+
+function build_genfrac(tree) {
+    var numer = build_expression(tree.numer);
+    var denom = build_expression(tree.denom);
+    if(tree.hasBarLine) {
+        return `( ${numer} ) / ( ${denom} )`;
+    }
+    else {
+        return `binom( ${numer} , ${denom} )`;
+    }
+}
+
+function build_sqrt(tree) {
+    var body = build_expression(tree.body);
+    if(tree.index) {
+        var index = build_expression(tree.index);
+        return `sqrt( ${index} , ${body} )`;
+    }
+    else {
+        return `sqrt( ${body} )`;
+    }
+}
+
+function build_leftright(tree) {
+    var left = tree.left;
+    var right = tree.right;
+
+
+    // auto lr
+    if ((left === '(' && right === ')') ||
+        (left === '[' && right === ']') ||
+        (left === '{' && right === '}')) {
+        return `${left} ${build_expression(tree.body)} ${right}`;
+    } else if (left === '|' && right === '|') {
+        return `abs( ${build_expression(tree.body)} )`;
+    } else if (left === '\\|' && right === '\\|') {
+        return `norm( ${build_expression(tree.body)} )`;
+    } else if (left === '\\lfloor' && right === '\\rfloor') {
+        return `floor( ${build_expression(tree.body)} )`;
+    } else if (left === '\\lceil' && right === '\\rceil') {
+        return `ceil( ${build_expression(tree.body)} )`;
+    } else if (left === '\\lfloor' && right === '\\rceil') {
+        return `round( ${build_expression(tree.body)} )`;
+    }
+    else {
+        return `lr(  )`
+    }
+}
+
+function build_font(tree) {
+    var font = tree.font
+    var fontCommand;
+
+    if (font in fontMapping) {
+        fontCommand = fontMapping[font];
+    } else {
+        console.warn(`Warning: The font "${font}" is not recognized.`);
+        fontCommand = font;
+    }
+
+    return `${fontCommand}( ${build_expression(tree.body)} )`;
 }
 
 function build_expression(tree) {
@@ -10,26 +133,28 @@ function build_expression(tree) {
         return tree.map(build_expression).join('');
     } else if (typeof tree === 'object' && tree !== null) {
         switch (tree.type) {
+            case 'atom':
+                return build_atom(tree);
             case 'mathord':
                 return build_mathord(tree);
             case 'textord':
-                return;
+                return build_textord(tree);
             case 'ordgroup':
-                return;
+                return build_ordgroup(tree);
             case 'text':
-                return;
+                return build_text(tree);
             case 'color':
                 return;
             case 'supsub':
-                return;
+                return build_supsub(tree);
             case 'genfrac':
-                return;
+                return build_genfrac(tree);
             case 'array':
                 return;
             case 'sqrt':
-                return;
+                return build_sqrt(tree);
             case 'leftright':
-                return;
+                return build_leftright(tree);
             case 'accent':
                 return;
             case 'spacing':
@@ -39,7 +164,7 @@ function build_expression(tree) {
             case 'katex':
                 return;
             case 'font':
-                return;
+                return build_font(tree);
             case 'delimsizing':
                 return;
             case 'styling':
@@ -49,6 +174,8 @@ function build_expression(tree) {
             case 'overline':
                 return;
             case 'underline':
+                return;
+            case 'xArrow':
                 return;
             case 'rule':
                 return;
@@ -76,9 +203,22 @@ function convert(expression) {
 }
 
 function main() {
-    const latexString = "\\mathrm{a}";
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
 
-    console.log(convert(latexString));
+    const filePath = path.join(__dirname, 'test.txt');
+
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading file:', err);
+            return;
+        }
+
+        const latexString = data;
+
+        console.log('formula: ', latexString);
+        console.log(convert(latexString));
+    });
 }
 
 main();

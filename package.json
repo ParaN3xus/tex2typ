@@ -12,5 +12,6 @@
   "license": "MIT",
   "dependencies": {
     "katex": "^0.16.11"
-  }
+  },
+  "type": "module"
 }
