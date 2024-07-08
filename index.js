@@ -304,6 +304,21 @@ function build_xArrow(tree) {
     console.warn(`Warning: The xArrow "${tree.label}" is not recognized.`)
 }
 
+function build_rule(tree) {
+    // ignore
+    return;
+}
+
+function build_llap(tree) {
+    // ignore
+    return;
+}
+
+function build_rlap(tree) {
+    // ignore
+    return;
+}
+
 function build_expression(tree) {
     if (Array.isArray(tree)) {
         return tree.map(build_expression).join(' ');
@@ -358,11 +373,11 @@ function build_expression(tree) {
             case 'xArrow':
                 return build_xArrow(tree);
             case 'rule':
-                return;
+                return build_rule(tree);
             case 'llap':
-                return;
+                return build_llap(tree);
             case 'rlap':
-                return;
+                return build_rlap(tree);
             case 'phantom':
                 return;
             default:
