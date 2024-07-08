@@ -274,7 +274,7 @@ build_functions.font = function (tree) {
     }
 
     if (fontCommand === "upright") {
-        const allMathord = tree.body.type === "ordgroup" & tree.body.body.every(element => element.type === 'mathord');
+        const allMathord = tree.body.type === "ordgroup" && tree.body.body.every(element => element.type === 'mathord');
 
         if (allMathord) {
             const mergedText = tree.body.body.map(element => element.text).join('');
