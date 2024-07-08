@@ -93,17 +93,11 @@ function build_typst_mat(array, delim) {
     var body_typ = "";
     var body = array.body;
 
-    for (const [rindex, row] of body.entries()) {
-        for (var [gindex, grid] of row.entries()) {
-            body_typ += build_expression(grid);
-            if (gindex != row.length - 1) {
-                body_typ += " , ";
-            }
-        }
-        if (rindex != body.length - 1) {
-            body_typ += " ; ";
-        }
-    }
+    body.map(
+        row => row.map(
+            cell => build_expression(cell)
+        ).join(" , ")
+    ).join(" ; ");
 
     if (delim) {
         var delim_typ = `delim: ${delim}`;
@@ -117,8 +111,11 @@ function build_array(tree) {
         tree.from === "matrix") {
         return build_typst_mat(tree.body, undefined)
     } else {
-        // TODO: common align
-        return;
+        return tree.body.map(
+            row => row.map(
+                cell => build_expression(cell)
+            ).join(" & ")
+        ).join(" \\ ");
     }
 }
 
