@@ -319,6 +319,10 @@ function build_rlap(tree) {
     return;
 }
 
+function build_phantom(tree) {
+    return `hide( ${build_expression(tree.body)} )`;
+}
+
 function build_expression(tree) {
     if (Array.isArray(tree)) {
         return tree.map(build_expression).join(' ');
@@ -379,7 +383,7 @@ function build_expression(tree) {
             case 'rlap':
                 return build_rlap(tree);
             case 'phantom':
-                return;
+                return build_phantom(tree);
             default:
                 return;
         }
