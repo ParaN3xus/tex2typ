@@ -7,6 +7,7 @@ build_functions.atom = function (tree) {
     if (tree.text in atomMapping) {
         return atomMapping[tree.text];
     } else {
+        console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
         return tree.text;
     }
 }
