@@ -209,7 +209,8 @@ build_functions.kern = function (tree) {
 }
 
 build_functions.spacing = function (tree) {
-    return "space.nobreak";
+      return "";
+    //return "space.nobreak";
 }
 
 
@@ -282,6 +283,11 @@ build_functions.delimsizing = function (tree) {
 }
 
 build_functions.sizing = function (tree) {
+    // ignore
+    return build_expression(tree.body);
+}
+
+build_functions.internal = function (tree) {
     // ignore
     return build_expression(tree.body);
 }
