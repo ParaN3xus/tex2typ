@@ -220,7 +220,8 @@ build_functions.kern = function (tree) {
 }
 
 build_functions.spacing = function (tree) {
-      return "";
+    // TODO: many spaces
+    return "";
     //return "space.nobreak";
 }
 
@@ -271,9 +272,25 @@ build_functions.font = function (tree) {
         fontCommand = font;
     }
 
-    if(fontCommand === "upright" && tree.body.text === "d") {
-        return "dif";
+    if (fontCommand === "upright") {
+        const allMathord = tree.body.type === "ordgroup" & tree.body.body.every(element => element.type === 'mathord');
+
+        if (allMathord) {
+            const mergedText = tree.body.body.map(element => element.text).join('');
+            if (mergedText.length > 1) {
+                return `"${mergedText}"`;
+            }
+
+            if (mergedText === "d") {
+                return "dif";
+            }
+
+            return `upright( ${mergedText} )`
+        } else if (tree.body.text === "d") {
+            return "dif";
+        }
     }
+
 
     return `${fontCommand}( ${build_expression(tree.body)} )`;
 }
