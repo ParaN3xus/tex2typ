@@ -1,7 +1,7 @@
 import katex from 'katex';
 import fs from 'fs';
 import path from 'path';
-import { fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping } from './mapping.js';
+import { fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping } from './mapping.js';
 import { fileURLToPath } from 'url';
 
 function build_atom(tree) {
@@ -108,7 +108,7 @@ function build_typst_mat(array, delim) {
         var delim_typ = `delim: ${delim}`;
         return `mat( ${delim_typ} , ${body_typ} )`;
     }
-    return `mat ( ${body_typ} )`;
+    return `mat( ${body_typ} )`;
 }
 
 function build_array(tree) {
@@ -212,6 +212,40 @@ function build_spacing(tree) {
 }
 
 
+const operators = [
+    "arccos", "arcsin", "arctan", "arg", "cos", "cosh", "cot", "coth", "csc", 
+    "csch", "ctg", "deg", "det", "dim", "exp", "gcd", "hom", "id", "im", "inf", 
+    "ker", "lg", "lim", "liminf", "limsup", "ln", "log", "max", "min", "mod", 
+    "Pr", "sec", "sech", "sin", "sinc", "sinh", "sup", "tan", "tanh", "tg", "tr"
+];
+
+function build_op(tree) {
+    if(tree.name in opMapping) {
+        return opMapping[tree.name];
+    }
+
+    console.warn(`Warning: The op "${tree.name}" is not recognized.`);
+    return tree.name;
+}
+
+function build_operatorname(tree) {
+    const allMathord = tree.body.every(element => element.type === 'mathord');
+    const allLiteral = tree.body.every(element => !element.text.startsWith("\\"));
+
+    if (allMathord) {
+        if (allLiteral) {
+            const mergedText = tree.body.map(element => element.text).join('');
+
+            if (operators.includes(mergedText)) {
+                return mergedText;
+            }
+        }
+    }
+    const mergedOp = tree.body.map(element => build_expression(element)).join(' ');
+    return `op( upright( ${mergedOp} ) )`;
+}
+
+
 function build_font(tree) {
     var font = tree.font
     var fontCommand;
@@ -232,7 +266,7 @@ function build_styling(tree) {
 
 function build_expression(tree) {
     if (Array.isArray(tree)) {
-        return tree.map(build_expression).join('');
+        return tree.map(build_expression).join(' ');
     } else if (typeof tree === 'object' && tree !== null) {
         switch (tree.type) {
             case 'atom':
@@ -264,7 +298,9 @@ function build_expression(tree) {
             case 'spacing':
                 return build_spacing(tree);
             case 'op':
-                return;
+                return build_op(tree);
+            case 'operatorname':
+                return build_operatorname(tree);
             case 'katex':
                 return;
             case 'font':
