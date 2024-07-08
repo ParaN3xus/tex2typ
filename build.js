@@ -243,6 +243,7 @@ build_functions.operatorname = function (tree) {
         }
     }
     const mergedOp = tree.body.map(element => build_expression(element)).join(' ');
+
     return `op( upright( ${mergedOp} ) )`;
 }
 
@@ -256,6 +257,10 @@ build_functions.font = function (tree) {
     } else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
         fontCommand = font;
+    }
+
+    if(fontCommand === "upright" && tree.body.text === "d") {
+        return "dif";
     }
 
     return `${fontCommand}( ${build_expression(tree.body)} )`;
