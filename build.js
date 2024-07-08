@@ -378,9 +378,32 @@ function build_typst_mat(array, delim) {
     return `mat( ${body_typ} )`;
 }
 
+function isDigitOrDot(char) {
+    return char === '.' || (char >= '0' && char <= '9');
+}
+
 export function build_expression(tree) {
     if (Array.isArray(tree)) {
-        return tree.map(build_expression).join(' ');
+        let result = [];
+        let buffer_number = [];
+
+        for (let i = 0; i < tree.length; i++) {
+            if (tree[i].type === 'textord' && (isDigitOrDot(tree[i].text))) {
+                buffer_number.push(tree[i]);
+            } else {
+                if (buffer_number.length > 0) {
+                    result.push(buffer_number.map(build_expression).join(""));
+                    buffer_number = [];
+                }
+                result.push(build_expression(tree[i]));
+            }
+        }
+
+        if (buffer_number.length > 0) {
+            result.push(buffer_number.map(build_expression).join(""));
+        }
+
+        return result.join(' ');
     } else if (typeof tree === 'object' && tree !== null) {
         if (tree.type in build_functions) {
             return build_functions[tree.type](tree);
