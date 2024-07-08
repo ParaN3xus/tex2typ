@@ -88,10 +88,50 @@ function build_sqrt(tree) {
     }
 }
 
+function build_typst_mat(array, delim) {
+    var body_typ = "";
+    var body = array.body;
+
+    for (const [rindex, row] of body.entries()) {
+        for (var [gindex, grid] of row.entries()) {
+            body_typ += build_expression(grid);
+            if (gindex != row.length - 1) {
+                body_typ += " , ";
+            }
+        }
+        if(rindex != body.length - 1) {
+            body_typ += " ; ";
+        }
+    }
+
+    if(delim) {
+        var delim_typ = `delim: ${delim}`;
+        return `mat( ${delim_typ} , ${body_typ} )`;
+    }
+    return `mat ( ${body_typ} )`;
+}
+
+function build_array(tree) {
+    if (tree.type === "array" &&
+        tree.from === "matrix") {
+        return build_typst_mat(tree.body, undefined)
+    } else {
+        // TODO: common align
+        return;
+    }
+}
+
 function build_leftright(tree) {
     var left = tree.left;
     var right = tree.right;
 
+    var left_typ = `"${left}"`;
+
+    if (tree.body.length == 1 &&
+        tree.body[0].type === "array" &&
+        tree.body[0].from === "matrix") {
+        return build_typst_mat(tree.body[0], left_typ)
+    }
 
     // auto lr
     if ((left === '(' && right === ')') ||
@@ -110,6 +150,7 @@ function build_leftright(tree) {
         return `round( ${build_expression(tree.body)} )`;
     }
     else {
+        // TODO: map lr(open and close) to typst
         return `lr(  )`
     }
 }
@@ -126,6 +167,10 @@ function build_font(tree) {
     }
 
     return `${fontCommand}( ${build_expression(tree.body)} )`;
+}
+
+function build_styling(tree) {
+    return build_expression(tree.body);
 }
 
 function build_expression(tree) {
@@ -150,7 +195,7 @@ function build_expression(tree) {
             case 'genfrac':
                 return build_genfrac(tree);
             case 'array':
-                return;
+                return build_array(tree);
             case 'sqrt':
                 return build_sqrt(tree);
             case 'leftright':
@@ -168,7 +213,7 @@ function build_expression(tree) {
             case 'delimsizing':
                 return;
             case 'styling':
-                return;
+                return build_styling(tree);
             case 'sizing':
                 return;
             case 'overline':
