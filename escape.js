@@ -11,6 +11,15 @@ const latexEscapes = {
     '\\~': '~'
 };
 
+export function decodeLatexEscape(input) {
+    let output = input;
+    for (const [key, value] of Object.entries(latexEscapes)) {
+        output = output.split(key).join(value);
+    }
+    return output;
+}
+
+
 const typstEscapes = {
     '\\': '\\\\',
     '{': '\\{',
@@ -24,3 +33,11 @@ const typstEscapes = {
     '^': '\\^',
     '~': '\\~'
 };
+
+export function encodeTypstEscape(input) {
+    let output = input;
+    for (const [key, value] of Object.entries(typstEscapes)) {
+        output = output.split(key).join(value);
+    }
+    return output;
+}

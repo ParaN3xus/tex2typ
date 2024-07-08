@@ -2,6 +2,7 @@ import katex from 'katex';
 import fs from 'fs';
 import path from 'path';
 import { fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping } from './mapping.js';
+import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
 import { fileURLToPath } from 'url';
 
 function build_atom(tree) {
@@ -260,6 +261,26 @@ function build_font(tree) {
     return `${fontCommand}( ${build_expression(tree.body)} )`;
 }
 
+const sizes = [ "1.2em", "1.8em", "2.4em", "3em" ];
+
+function build_delimsizing(tree) {
+    var delim_typ;
+    if(tree.delim in atomMapping) {
+        delim_typ = atomMapping[tree.delim];
+    } else {
+        delim_typ = encodeTypstEscape(decodeLatexEscape(tree.delim));
+    }
+
+    var size_typ = sizes[tree.size - 1];
+    
+    return `lr( size: #${size_typ} , ${delim_typ} )`;
+}
+
+function build_sizing(tree) {
+    // ignore
+    return build_expression(tree.body);
+}
+
 function build_styling(tree) {
     return build_expression(tree.body);
 }
@@ -306,11 +327,11 @@ function build_expression(tree) {
             case 'font':
                 return build_font(tree);
             case 'delimsizing':
-                return;
+                return build_delimsizing(tree);
             case 'styling':
                 return build_styling(tree);
             case 'sizing':
-                return;
+                return build_sizing(tree);
             case 'overline':
                 return;
             case 'underline':
