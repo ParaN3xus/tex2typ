@@ -285,6 +285,14 @@ function build_styling(tree) {
     return build_expression(tree.body);
 }
 
+function build_overline(tree) {
+    return `overline( ${build_expression(tree)} )`;
+}
+
+function build_underline(tree) {
+    return `underline( ${build_expression(tree)} )`;
+}
+
 function build_expression(tree) {
     if (Array.isArray(tree)) {
         return tree.map(build_expression).join(' ');
@@ -333,9 +341,9 @@ function build_expression(tree) {
             case 'sizing':
                 return build_sizing(tree);
             case 'overline':
-                return;
+                return build_overline(tree);
             case 'underline':
-                return;
+                return build_underline(tree);
             case 'xArrow':
                 return;
             case 'rule':
