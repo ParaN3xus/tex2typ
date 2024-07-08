@@ -538,7 +538,7 @@ export const accentMapping = {
     "\\widehat": "hat",
     "\\tilde": "tilde",
     "\\widetilde": "tilde",
-    "\\bar": "macron",
+    "\\bar": "overline",
     "\\breve": "breve",
     "\\dot": "dot",
     "\\ddot": "dot.double",
