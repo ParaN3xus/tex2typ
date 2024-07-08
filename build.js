@@ -38,7 +38,7 @@ build_functions.textord = function (tree) {
 }
 
 build_functions.ordgroup = function (tree) {
-    return tree.body.map(node => build_expression(node)).join(' ');
+    return build_expression(tree.body);
 }
 
 build_functions.text = function (tree) {
