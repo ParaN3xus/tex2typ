@@ -481,7 +481,7 @@ export const closeMapping = {
     "\\rbrack": "bracket.r",
     "\\rgroup": "⟯",
     "\\rangle": "angle.r",
-    "\\rbrace": "\\}",
+    "\\rbrace": "}",
     "\\lrcorner": "⌟",
     "\\rmoustache": "⎱",
     "\\urcorner": "⌝",
@@ -498,7 +498,7 @@ export const openMapping = {
     "\\lbrack": "bracket.l",
     "\\lgroup": "⟮",
     "\\langle": "angle.l",
-    "\\lbrace": "\\{",
+    "\\lbrace": "{",
     "\\llcorner": "⌞",
     "\\lmoustache": "⎰",
     "\\ulcorner": "⌜"
