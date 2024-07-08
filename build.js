@@ -288,8 +288,7 @@ build_functions.sizing = function (tree) {
 }
 
 build_functions.internal = function (tree) {
-    // ignore
-    return build_expression(tree.body);
+    return "thin";
 }
 
 build_functions.styling = function (tree) {
