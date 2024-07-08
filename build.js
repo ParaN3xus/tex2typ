@@ -68,14 +68,14 @@ build_functions.supsub = function (tree) {
 
         // y'
         if (tree.sup.type === "ordgroup") {
-            const allPrime = tree.sup.body.every(element => element.text === '\\prime');
+            const allPrime = tree.sup.body.length != 0 && tree.sup.body.every(element => element.text === '\\prime');
             if (allPrime) {
                 typ += " ' ".repeat(tree.sup.body.length);
                 return typ;
             }
         }
 
-        typ +=  typ + ` ^ ( ${build_expression(tree.sup)} )`;
+        typ += ` ^ ( ${build_expression(tree.sup)} )`;
     }
     return typ;
 }
