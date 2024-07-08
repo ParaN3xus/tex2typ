@@ -3,15 +3,15 @@ import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
 
 var build_functions = {}
 
-build_functions.atom = function(tree) {
-    if(tree.text in atomMapping) {
+build_functions.atom = function (tree) {
+    if (tree.text in atomMapping) {
         return atomMapping[tree.text];
     } else {
         return tree.text;
     }
 }
 
-build_functions.mathord = function(tree) {
+build_functions.mathord = function (tree) {
     var tex = tree.text;
     var typ;
 
@@ -24,7 +24,7 @@ build_functions.mathord = function(tree) {
     return typ;
 }
 
-build_functions.textord = function(tree) {
+build_functions.textord = function (tree) {
     var tex = tree.text;
     var typ;
 
@@ -37,11 +37,11 @@ build_functions.textord = function(tree) {
     return typ;
 }
 
-build_functions.ordgroup = function(tree) {
+build_functions.ordgroup = function (tree) {
     return tree.body.map(node => build_expression(node)).join(' ');
 }
 
-build_functions.text = function(tree) {
+build_functions.text = function (tree) {
     const allTextord = tree.body.every(element => element.type === 'textord');
 
     var mergedText;
@@ -58,7 +58,7 @@ build_functions.text = function(tree) {
     }
 }
 
-build_functions.supsub = function(tree) {
+build_functions.supsub = function (tree) {
     var typ = build_expression(tree.base);
     if (tree.sub) {
         typ = typ + ` _ ( ${build_expression(tree.sub)} )`;
@@ -69,7 +69,7 @@ build_functions.supsub = function(tree) {
     return typ;
 }
 
-build_functions.genfrac = function(tree) {
+build_functions.genfrac = function (tree) {
     var numer = build_expression(tree.numer);
     var denom = build_expression(tree.denom);
     if (tree.hasBarLine) {
@@ -80,7 +80,7 @@ build_functions.genfrac = function(tree) {
     }
 }
 
-build_functions.sqrt = function(tree) {
+build_functions.sqrt = function (tree) {
     var body = build_expression(tree.body);
     if (tree.index) {
         var index = build_expression(tree.index);
@@ -91,7 +91,7 @@ build_functions.sqrt = function(tree) {
     }
 }
 
-build_functions.array = function(tree) {
+build_functions.array = function (tree) {
     if (tree.type === "array" &&
         tree.from === "matrix") {
         return build_typst_mat(tree.body, undefined)
@@ -105,13 +105,13 @@ build_functions.array = function(tree) {
 }
 
 
-build_functions.leftright = function(tree) {
+build_functions.leftright = function (tree) {
     var left = tree.left;
     var right = tree.right;
 
     var is_literal_left = false;
     var left_typ = "";
-    if(left in atomMapping) {
+    if (left in atomMapping) {
         left_typ = atomMapping[left];
     } else {
         left_typ = left;
@@ -120,7 +120,7 @@ build_functions.leftright = function(tree) {
 
     var is_literal_right = false;
     var right_typ = "";
-    if(right in atomMapping) {
+    if (right in atomMapping) {
         right_typ = atomMapping[right];
     } else {
         right_typ = right;
@@ -156,7 +156,7 @@ build_functions.leftright = function(tree) {
     }
 }
 
-build_functions.accent = function(tree) {
+build_functions.accent = function (tree) {
     var base_typ = build_expression(tree.base);
     var label = tree.label;
     var accent_typ;
@@ -190,7 +190,7 @@ build_functions.accent = function(tree) {
     return res;
 }
 
-build_functions.kern = function(tree) {
+build_functions.kern = function (tree) {
     var unit = tree.dimension.unit;
     var number = tree.dimension.number
     switch (unit) {
@@ -208,7 +208,7 @@ build_functions.kern = function(tree) {
     }
 }
 
-build_functions.spacing = function(tree) {
+build_functions.spacing = function (tree) {
     return "space.nobreak";
 }
 
@@ -220,7 +220,7 @@ const operators = [
     "Pr", "sec", "sech", "sin", "sinc", "sinh", "sup", "tan", "tanh", "tg", "tr"
 ];
 
-build_functions.op = function(tree) {
+build_functions.op = function (tree) {
     if (tree.name in opMapping) {
         return opMapping[tree.name];
     }
@@ -229,7 +229,7 @@ build_functions.op = function(tree) {
     return tree.name;
 }
 
-build_functions.operatorname = function(tree) {
+build_functions.operatorname = function (tree) {
     const allMathord = tree.body.every(element => element.type === 'mathord');
     const allLiteral = tree.body.every(element => !element.text.startsWith("\\"));
 
@@ -247,7 +247,7 @@ build_functions.operatorname = function(tree) {
 }
 
 
-build_functions.font = function(tree) {
+build_functions.font = function (tree) {
     var font = tree.font
     var fontCommand;
 
@@ -263,7 +263,7 @@ build_functions.font = function(tree) {
 
 const sizes = ["1.2em", "1.8em", "2.4em", "3em"];
 
-build_functions.delimsizing = function(tree) {
+build_functions.delimsizing = function (tree) {
     var delim_typ;
     if (tree.delim in atomMapping) {
         delim_typ = atomMapping[tree.delim];
@@ -276,24 +276,24 @@ build_functions.delimsizing = function(tree) {
     return `lr( size: #${size_typ} , ${delim_typ} )`;
 }
 
-build_functions.sizing = function(tree) {
+build_functions.sizing = function (tree) {
     // ignore
     return build_expression(tree.body);
 }
 
-build_functions.styling = function(tree) {
+build_functions.styling = function (tree) {
     return build_expression(tree.body);
 }
 
-build_functions.overline = function(tree) {
+build_functions.overline = function (tree) {
     return `overline( ${build_expression(tree)} )`;
 }
 
-build_functions.underline = function(tree) {
+build_functions.underline = function (tree) {
     return `underline( ${build_expression(tree)} )`;
 }
 
-build_functions.xArrow = function(tree) {
+build_functions.xArrow = function (tree) {
     var label_typ;
     if (tree.label in xArrowMapping) {
         label_typ = xArrowMapping[tree.label];
@@ -304,22 +304,22 @@ build_functions.xArrow = function(tree) {
     console.warn(`Warning: The xArrow "${tree.label}" is not recognized.`)
 }
 
-build_functions.rule = function(tree) {
+build_functions.rule = function (tree) {
     // ignore
     return;
 }
 
-build_functions.llap = function(tree) {
+build_functions.llap = function (tree) {
     // ignore
     return;
 }
 
-build_functions.rlap = function(tree) {
+build_functions.rlap = function (tree) {
     // ignore
     return;
 }
 
-build_functions.phantom = function(tree) {
+build_functions.phantom = function (tree) {
     return `hide( ${build_expression(tree.body)} )`;
 }
 
@@ -344,7 +344,7 @@ export function build_expression(tree) {
     if (Array.isArray(tree)) {
         return tree.map(build_expression).join(' ');
     } else if (typeof tree === 'object' && tree !== null) {
-        if(tree.type in build_functions) {
+        if (tree.type in build_functions) {
             return build_functions[tree.type](tree);
         } else {
             console.warn(`Warning: The tree type "${tree.type}" is not recognized.`);

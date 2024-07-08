@@ -635,4 +635,4 @@ export const xArrowMapping = {
     "\\xtofrom": "arrows.rl",
     "\\xmapsto": "arrow.r.bar",
     "\\xlongequal": "eq",
-}
+} 

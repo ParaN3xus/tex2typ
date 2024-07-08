@@ -23,7 +23,7 @@ export function decodeLatexEscape(input) {
 const typstEscapes = {
     '\\': '\\\\',
     '{': '\\{',
-    '}': '\\}', 
+    '}': '\\}',
     '(': '\\(',
     ')': '\\)',
     '$': '\\$',
