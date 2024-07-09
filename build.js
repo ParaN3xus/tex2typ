@@ -278,6 +278,14 @@ build_functions.font = function (tree) {
     if (font in fontMapping) {
         fontCommand = fontMapping[font];
     } else if (font === "mathbf") {
+        const allMathord = tree.body.type === "ordgroup" && tree.body.body.every(element => element.type === 'mathord');
+
+        if (allMathord) {
+            const mergedText = tree.body.body.map(element => element.text).join('');
+            if (mergedText.length > 1) {
+                return `bold( "${mergedText}" )`;
+            }
+        } 
         return `bold( upright( ${build_expression(tree.body)} ) )`;
     } else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
