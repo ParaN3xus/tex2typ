@@ -140,9 +140,18 @@ build_functions.leftright = function (tree) {
     }
 
     if (tree.body.length == 1 &&
-        tree.body[0].type === "array" &&
-        tree.body[0].from === "matrix") {
-        return build_typst_mat(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
+        tree.body[0].type === "array") {
+        // mat
+        if (tree.body[0].from === "matrix") {
+            return build_typst_mat(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ);
+        }
+
+        // case
+        if (left === "." && right != ".") {
+            return build_typst_case(tree.body[0], is_literal_right ? `"${right_typ}"` : right_typ, true);
+        } else if (right === "." && left != ".") {
+            return build_typst_case(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ, false);
+        }
     }
 
     var body_typ = build_expression(tree.body)
@@ -379,6 +388,20 @@ function build_typst_mat(array, delim) {
         return `mat( ${delim_typ} , ${body_typ} )`;
     }
     return `mat( ${body_typ} )`;
+}
+
+function build_typst_case(array, delim, rev) {
+    var param = ""
+    if (!(delim === "{" || delim === "}")) {
+        param += `delim: ${delim} , `;
+    }
+    if(rev) {
+        param += `reverse: #true , `
+    }
+
+    param += array.body.map( row => row.map( cell => build_expression(cell)).join(" & ") ).join(" , ");
+
+    return `cases( ${param} )`;
 }
 
 function isDigitOrDot(char) {
