@@ -151,12 +151,20 @@ build_functions.leftright = function (tree) {
             return build_typst_mat(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ);
         }
 
+        // vec
+        if(tree.body[0].cols.length == 1) {
+            return build_typst_vec(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
+        }
+
         // case
         if (left === "." && right != ".") {
             return build_typst_case(tree.body[0], is_literal_right ? `"${right_typ}"` : right_typ, true);
         } else if (right === "." && left != ".") {
             return build_typst_case(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ, false);
         }
+
+
+
     }
 
     var body_typ = build_expression(tree.body)
@@ -419,7 +427,7 @@ function build_typst_mat(array, delim) {
     var body_typ = "";
     var body = array.body;
 
-    body.map(
+    body_typ = body.map(
         row => row.map(
             cell => build_expression(cell)
         ).join(" , ")
@@ -430,6 +438,21 @@ function build_typst_mat(array, delim) {
         return `mat( ${delim_typ} , ${body_typ} )`;
     }
     return `mat( ${body_typ} )`;
+}
+
+function build_typst_vec(array, delim) {
+    var body_typ = "";
+    var body = array.body;
+
+    body_typ = body.map(
+        row => build_expression(row[0])
+    ).join(" , ");
+
+    if (delim) {
+        var delim_typ = `delim: ${delim}`;
+        return `vec( ${delim_typ} , ${body_typ} )`;
+    }
+    return `vec( ${body_typ} )`;
 }
 
 function build_typst_case(array, delim, rev) {
