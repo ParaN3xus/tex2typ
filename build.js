@@ -65,25 +65,27 @@ build_functions.text = function (tree) {
 }
 
 build_functions.supsub = function (tree) {
-    var typ = build_expression(tree.base);
+    var base_typ = build_expression(tree.base);
+    var sub_typ = "", sup_typ = "";
+    var res;
     if (tree.sub) {
-        typ += ` _ ( ${build_expression(tree.sub)} )`;
+        sub_typ = ` _ ( ${build_expression(tree.sub)} )`;
     }
 
     if (tree.sup) {
-
         // y'
         if (tree.sup.type === "ordgroup") {
             const allPrime = tree.sup.body.length != 0 && tree.sup.body.every(element => element.text === '\\prime');
             if (allPrime) {
-                typ += " ' ".repeat(tree.sup.body.length);
-                return typ;
+                sup_typ = " ' ".repeat(tree.sup.body.length).trim();
+
+                return `${base_typ}${sup_typ}${sub_typ}`;
             }
         }
 
-        typ += ` ^ ( ${build_expression(tree.sup)} )`;
+        sup_typ = ` ^ ( ${build_expression(tree.sup)} )`;
     }
-    return typ;
+    return `${base_typ}${sub_typ}${sup_typ}`;
 }
 
 build_functions.genfrac = function (tree) {
