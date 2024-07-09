@@ -246,10 +246,12 @@ const operators = [
 build_functions.op = function (tree) {
     if (tree.name in opMapping) {
         return opMapping[tree.name];
+    } else if ("body" in tree) {
+        return build_expression(tree.body);
     }
 
-    console.warn(`Warning: The op "${tree.name}" is not recognized.`);
-    return tree.name;
+    console.warn(`Warning: The op "${tree}" is not recognized.`);
+    return "";
 }
 
 build_functions.operatorname = function (tree) {
@@ -379,6 +381,10 @@ build_functions.rlap = function (tree) {
 
 build_functions.phantom = function (tree) {
     return `hide( ${build_expression(tree.body)} )`;
+}
+
+build_functions.mclass = function (tree) {
+    return build_expression(tree.body);
 }
 
 function build_typst_mat(array, delim) {
