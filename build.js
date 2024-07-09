@@ -6,6 +6,8 @@ var build_functions = {}
 build_functions.atom = function (tree) {
     if (tree.text in atomMapping) {
         return atomMapping[tree.text];
+    } else if (tree.text === ";") {
+        return "\\;";
     } else {
         console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
         return tree.text;
@@ -308,6 +310,7 @@ build_functions.font = function (tree) {
     if (font in fontMapping) {
         fontCommand = fontMapping[font];
     } else if (font === "mathbf") {
+        // TODO: space in mathord
         const allMathord = tree.body.type === "ordgroup" && tree.body.body.every(element => element.type === 'mathord');
 
         if (allMathord) {
