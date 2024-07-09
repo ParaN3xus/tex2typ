@@ -47,6 +47,7 @@ build_functions.text = function (tree) {
 
     var mergedText;
     if (allTextord) {
+        // TODO: not all texord but continuous occur
         mergedText = tree.body.map(element => element.text).join('');
 
         if (mergedText.length == 1) {
