@@ -47,14 +47,18 @@ build_functions.text = function (tree) {
 
     var mergedText;
     if (allTextord) {
-        // TODO: not all texord but continuous occur
-        mergedText = tree.body.map(element => element.text).join('');
+        const allLiteral = tree.body.every(element => !element.text.startsWith("\\"));
 
-        if (mergedText.length == 1) {
-            return `upright( ${mergedText} )`;
-        } else {
-            return `"${mergedText}"`;
+        if (allLiteral) {
+            // TODO: not all texord but continuous occur
+            mergedText = tree.body.map(element => build_expression(element)).join('');
+
+            if (mergedText.length > 1) {
+                return `"${mergedText}"`;
+            }
         }
+        return `upright( ${build_expression(tree.body)} )`;
+
     } else {
         return tree.body.map(node => build_expression(node)).join(' ');
     }
@@ -273,9 +277,9 @@ build_functions.op = function (tree) {
 
 build_functions.operatorname = function (tree) {
     const allMathord = tree.body.every(element => element.type === 'mathord');
-    const allLiteral = tree.body.every(element => !element.text.startsWith("\\"));
 
     if (allMathord) {
+        const allLiteral = tree.body.every(element => !element.text.startsWith("\\"));
         if (allLiteral) {
             const mergedText = tree.body.map(element => element.text).join('');
 
@@ -284,7 +288,7 @@ build_functions.operatorname = function (tree) {
             }
         }
     }
-    const mergedOp = tree.body.map(element => build_expression(element)).join(' ');
+    const mergedOp = build_expression(tree.body);
 
     return `op( upright( ${mergedOp} ) )`;
 }
@@ -300,11 +304,14 @@ build_functions.font = function (tree) {
         const allMathord = tree.body.type === "ordgroup" && tree.body.body.every(element => element.type === 'mathord');
 
         if (allMathord) {
-            const mergedText = tree.body.body.map(element => element.text).join('');
-            if (mergedText.length > 1) {
-                return `bold( "${mergedText}" )`;
+            const allLiteral = tree.body.body.every(element => !element.text.startsWith("\\"));
+            if (allLiteral) {
+                const mergedText = tree.body.body.map(element => element.text).join('');
+                if (mergedText.length > 1) {
+                    return `bold( "${mergedText}" )`;
+                }
             }
-        } 
+        }
         return `bold( upright( ${build_expression(tree.body)} ) )`;
     } else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
@@ -315,13 +322,16 @@ build_functions.font = function (tree) {
         const allMathord = tree.body.type === "ordgroup" && tree.body.body.every(element => element.type === 'mathord');
 
         if (allMathord) {
-            const mergedText = tree.body.body.map(element => element.text).join('');
-            if (mergedText.length > 1) {
-                return `"${mergedText}"`;
-            }
+            const allLiteral = tree.body.body.every(element => !element.text.startsWith("\\"));
+            if (allLiteral) {
+                const mergedText = tree.body.body.map(element => element.text).join('');
+                if (mergedText.length > 1) {
+                    return `"${mergedText}"`;
+                }
 
-            if (mergedText === "d") {
-                return "dif";
+                if (mergedText === "d") {
+                    return "dif";
+                }
             }
 
             return `upright( ${mergedText} )`
@@ -427,11 +437,11 @@ function build_typst_case(array, delim, rev) {
     if (!(delim === "{" || delim === "}")) {
         param += `delim: ${delim} , `;
     }
-    if(rev) {
+    if (rev) {
         param += `reverse: #true , `
     }
 
-    param += array.body.map( row => row.map( cell => build_expression(cell)).join(" & ") ).join(" , ");
+    param += array.body.map(row => row.map(cell => build_expression(cell)).join(" & ")).join(" , ");
 
     return `cases( ${param} )`;
 }
