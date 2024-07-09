@@ -1,4 +1,4 @@
-import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping } from './mapping.js';
+import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
 
 var build_functions = {}
@@ -130,8 +130,8 @@ build_functions.leftright = function (tree) {
 
     var is_literal_left = false;
     var left_typ = "";
-    if (left in atomMapping) {
-        left_typ = atomMapping[left];
+    if (left in lrMapping) {
+        left_typ = lrMapping[left];
     } else {
         left_typ = left;
         is_literal_left = true;
@@ -139,8 +139,8 @@ build_functions.leftright = function (tree) {
 
     var is_literal_right = false;
     var right_typ = "";
-    if (right in atomMapping) {
-        right_typ = atomMapping[right];
+    if (right in lrMapping) {
+        right_typ = lrMapping[right];
     } else {
         right_typ = right;
         is_literal_right = true;
@@ -164,9 +164,6 @@ build_functions.leftright = function (tree) {
         } else if (right === "." && left != ".") {
             return build_typst_case(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ, false);
         }
-
-
-
     }
 
     var body_typ = build_expression(tree.body)
@@ -504,7 +501,8 @@ export function build_expression(tree) {
             console.warn(`Warning: The tree type "${tree.type}" is not recognized.`);
         }
     } else {
-        log.warn("Warning: unknown tree!")
-        return "";
+        // null
+        return "zwj";
+        console.warn("Warning: null tree!")
     }
 }

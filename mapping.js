@@ -526,6 +526,12 @@ export const atomMapping = {
     ...relMapping
 }
 
+export const lrMapping = {
+    ...atomMapping, 
+    ...textordMapping,
+    ...mathordMapping
+}
+
 export const accentMapping = {
     "\\not": "cancel",
     "\\cancel": "cancel",
