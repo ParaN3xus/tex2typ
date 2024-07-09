@@ -423,6 +423,17 @@ build_functions.mclass = function (tree) {
 }
 
 build_functions.htmlmathml = function(tree) {
+    if(Array.isArray(tree.mathml) && Array.isArray(tree.mathml[0].body) && "text" in tree.mathml[0].body[0]) {
+        const text = tree.mathml[0].body[0].text;
+        switch (text) {
+            case "≠":
+                return "!=";
+            case "∉":
+                return "in.not";
+            default:
+                ;
+        }
+    }
     return build_expression(tree.html);
 }
 
