@@ -422,6 +422,10 @@ build_functions.mclass = function (tree) {
     return `scripts( ${build_expression(tree.body)} )`;
 }
 
+build_functions.htmlmathml = function(tree) {
+    return build_expression(tree.html);
+}
+
 function build_typst_mat(array, delim) {
     var body_typ = "";
     var body = array.body;

@@ -44,7 +44,9 @@ export const mathordMapping = {
     "\\varsigma": "sigma.alt",
     "\\vartheta": "theta.alt",
     "\\imath": "dotless.i",
+    "\\@imath": "dotless.i",
     "\\jmath": "dotless.j",
+    "\\@jmath": "dotless.j",
 }
 
 export const textordMapping = {
@@ -347,6 +349,7 @@ export const relMapping = {
     "\\Vvdash": "⊪",
     "\\gnapprox": "gt.curly.napprox",
     "\\ngeqslant": "gt.eq.not",
+    "\\@ngeqslant": "gt.eq.not",
     "\\precneqq": "prec.nequiv",
     "\\gneq": "⪈",
     "\\backepsilon": "in.rev.small",
@@ -387,18 +390,25 @@ export const relMapping = {
     "\\supsetneqq": "⫌",
     "\\varpropto": "prop",
     "\\varsubsetneq": "subset.neq",
+    "\\@varsubsetneq": "subset.neq",
     "\\varsubsetneqq": "⫋",
+    "\\@varsubsetneqq": "⫋",
     "\\varsupsetneq": "supset.neq",
+    "\\@varsupsetneq": "supset.neq",
     "\\varsupsetneqq": "⫌",
+    "\\@varsupsetneqq": "⫌",
     "\\gtreqqless": "⪌",
     "\\thicksim": "bold( tilde )",
     "\\nleqslant": "lt.eq.not",
+    "\\@nleqslant": "lt.eq.not",
     "\\nshortmid": "divides.not",
+    "\\@nshortmid": "divides.not",
     "\\smallfrown": "⌢",
     "\\shortmid": "divides",
     "\\gtrapprox": "gt.approx",
     "\\thickapprox": "bold( approx )",
     "\\nshortparallel": "parallel.not",
+    "\\@nshortparallel": "parallel.not",
     "\\not": "slash"
 }
 
@@ -483,8 +493,10 @@ export const closeMapping = {
     "\\rangle": "angle.r",
     "\\rbrace": "}",
     "\\lrcorner": "⌟",
+    "\\@lrcorner": "⌟",
     "\\rmoustache": "⎱",
     "\\urcorner": "⌝",
+    "\\@urcorner": "⌝",
 }
 
 
@@ -500,8 +512,10 @@ export const openMapping = {
     "\\langle": "angle.l",
     "\\lbrace": "{",
     "\\llcorner": "⌞",
+    "\\@llcorner": "⌞",
     "\\lmoustache": "⎰",
-    "\\ulcorner": "⌜"
+    "\\ulcorner": "⌜",
+    "\\@ulcorner": "⌜",
 }
 
 export const innerMapping = {
