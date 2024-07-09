@@ -1,4 +1,4 @@
-import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping } from './mapping.js';
+import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
 
 var build_functions = {}
@@ -247,6 +247,22 @@ build_functions.op = function (tree) {
     if (tree.name in opMapping) {
         return opMapping[tree.name];
     } else if ("body" in tree) {
+        var limits = ("limits" in tree.body) ? tree.body.limits : false;
+
+        if (limits = true) {
+            // not auto limits
+            var body = tree.body;
+
+            if (Array.isArray(body)) {
+                if (body.length == 1 && body[0].text in relMapping) {
+                    limits = false;
+                }
+            }
+        }
+
+        if (limits) {
+            return `limits( ${build_expression(tree.body)} )`;
+        }
         return build_expression(tree.body);
     }
 
@@ -384,7 +400,8 @@ build_functions.phantom = function (tree) {
 }
 
 build_functions.mclass = function (tree) {
-    return build_expression(tree.body);
+    // TODO: don't fucking scipts everything
+    return `scripts( ${build_expression(tree.body)} )`;
 }
 
 function build_typst_mat(array, delim) {
