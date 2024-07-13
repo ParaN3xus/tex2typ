@@ -344,7 +344,7 @@ build_functions.font = function (tree) {
                 }
             }
         }
-        return build_typst_function("bold", build_typst_function("upright", mergedOp));
+        return build_typst_function("bold", build_typst_function("upright", build_expression(tree.body)));
     } else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
         fontCommand = font;
