@@ -1,5 +1,5 @@
 import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
-import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
+import { decodeLatexEscape, encodeTypstFunctionEscape } from "./escape.js"
 
 var build_functions = {}
 
@@ -72,7 +72,7 @@ build_functions.supsub = function (tree) {
     if (tree.sub) {
         sub_typ = build_expression(tree.sub);
 
-        if(sub_typ.trim() != "") {
+        if (sub_typ.trim() != "") {
             sub_typ = ` _ ( ${sub_typ} )`;
         }
     }
@@ -90,7 +90,7 @@ build_functions.supsub = function (tree) {
 
         sup_typ = build_expression(tree.sup);
 
-        if(sup_typ.trim() != "") {
+        if (sup_typ.trim() != "") {
             sup_typ = ` ^ ( ${sup_typ} )`;
         }
     }
@@ -163,7 +163,7 @@ build_functions.leftright = function (tree) {
         }
 
         // vec
-        if(tree.body[0].cols.length == 1) {
+        if (tree.body[0].cols.length == 1) {
             return build_typst_vec(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
         }
 
@@ -423,7 +423,9 @@ build_functions.rlap = function (tree) {
 }
 
 build_functions.phantom = function (tree) {
-    return build_typst_function("hide", build_expression(tree.body));
+    // ignore
+    return;
+    //return build_typst_function("hide", build_expression(tree.body));
 }
 
 build_functions.mclass = function (tree) {
@@ -431,8 +433,8 @@ build_functions.mclass = function (tree) {
     return build_typst_function("scripts", build_expression(tree.body));
 }
 
-build_functions.htmlmathml = function(tree) {
-    if(Array.isArray(tree.mathml) && Array.isArray(tree.mathml[0].body) && "text" in tree.mathml[0].body[0]) {
+build_functions.htmlmathml = function (tree) {
+    if (Array.isArray(tree.mathml) && Array.isArray(tree.mathml[0].body) && "text" in tree.mathml[0].body[0]) {
         const text = tree.mathml[0].body[0].text;
         switch (text) {
             case "≠":
@@ -446,9 +448,9 @@ build_functions.htmlmathml = function(tree) {
     return build_expression(tree.html);
 }
 
-build_functions.horizBrace = function(tree) {
+build_functions.horizBrace = function (tree) {
     let body_typ = build_expression(tree.base);
-    switch(tree.label) {
+    switch (tree.label) {
         case "\\underbrace":
             return build_typst_function("underbrace", body_typ);
         case "\\overbrace":
@@ -466,8 +468,8 @@ function build_typst_function(functionName, args) {
         return '';
     }
 
-    if(typeof args === 'string') {
-        return `${functionName}( ${encodeTypstEscape(args)} )`;
+    if (typeof args === 'string') {
+        return `${functionName}( ${encodeTypstFunctionEscape(args)} )`;
     }
 
     args.forEach(arg => {
@@ -475,12 +477,12 @@ function build_typst_function(functionName, args) {
             if (arg.trim() === '') {
                 argsStrArray.push('()');
             } else {
-                argsStrArray.push(encodeTypstEscape(arg));
+                argsStrArray.push(encodeTypstFunctionEscape(arg));
             }
         } else if (Array.isArray(arg) && arg.length === 2) {
             const [key, value] = arg;
             if (value.trim() != '') {
-                argsStrArray.push(`${key}: ${encodeTypstEscape(value)}`);
+                argsStrArray.push(`${key}: ${encodeTypstFunctionEscape(value)}`);
             }
         }
     });

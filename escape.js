@@ -44,3 +44,17 @@ export function encodeTypstEscape(input) {
     }
     return output;
 }
+
+const typstFunctionEscapes = {
+    '\\': '\\\\',
+    ',': '\\,',
+    ';': '\\;',
+};
+
+export function encodeTypstFunctionEscape(input) {
+    let output = input;
+    for (const [key, value] of Object.entries(typstFunctionEscapes)) {
+        output = output.split(key).join(value);
+    }
+    return output;
+}
