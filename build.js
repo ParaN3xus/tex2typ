@@ -67,6 +67,10 @@ build_functions.text = function (tree) {
 
 build_functions.supsub = function (tree) {
     var base_typ = build_expression(tree.base);
+    if(base_typ == undefined || base_typ.trim() === "") {
+        base_typ = "zwj";
+    }
+
     var sub_typ = "", sup_typ = "";
     var res;
     if (tree.sub) {
