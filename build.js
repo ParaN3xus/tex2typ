@@ -367,7 +367,7 @@ build_functions.delimsizing = function (tree) {
     if (tree.delim in atomMapping) {
         delim_typ = atomMapping[tree.delim];
     } else {
-        delim_typ = encodeTypstEscape(decodeLatexEscape(tree.delim));
+        delim_typ = decodeLatexEscape(tree.delim);
     }
 
     var size_typ = sizes[tree.size - 1];
@@ -467,7 +467,7 @@ function build_typst_function(functionName, args) {
     }
 
     if(typeof args === 'string') {
-        return `${functionName}( ${args} )`;
+        return `${functionName}( ${encodeTypstEscape(args)} )`;
     }
 
     args.forEach(arg => {
@@ -475,12 +475,12 @@ function build_typst_function(functionName, args) {
             if (arg.trim() === '') {
                 argsStrArray.push('()');
             } else {
-                argsStrArray.push(arg);
+                argsStrArray.push(encodeTypstEscape(arg));
             }
         } else if (Array.isArray(arg) && arg.length === 2) {
             const [key, value] = arg;
             if (value.trim() != '') {
-                argsStrArray.push(`${key}: ${value}`);
+                argsStrArray.push(`${key}: ${encodeTypstEscape(value)}`);
             }
         }
     });
