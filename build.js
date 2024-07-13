@@ -177,6 +177,17 @@ build_functions.leftright = function (tree) {
 
     var body_typ = build_expression(tree.body)
 
+    // mid
+    if (left === "." && right != ".") {
+        let mid = right_typ;
+        return `${build_expression("mid", mid)} ${body_typ}`;
+
+    } else if(left != "." && right === ".") {
+        let mid = left_typ;
+        return `${body_typ} ${build_expression("mid", mid)}`;
+    }
+
+
     // auto lr
     if ((left === '(' && right === ')') ||
         (left === '[' && right === ']') ||
@@ -207,10 +218,10 @@ build_functions.accent = function (tree) {
 
     if (label in accentMapping) {
         accent_typ = accentMapping[label];
-        res = `${accent_typ}( ${base_typ} )`;
+        res = build_typst_function(accent_typ, base_typ);
     } else if (label in atomMapping) {
         accent_typ = atomMapping[label];
-        res = `${accent_typ}( ${base_typ} )`;
+        res = build_typst_function(accent_typ, base_typ);
     } else {
         switch (label) {
             case "\\bcancel":
