@@ -446,6 +446,19 @@ build_functions.htmlmathml = function(tree) {
     return build_expression(tree.html);
 }
 
+build_functions.horizBrace = function(tree) {
+    let body_typ = build_expression(tree.base);
+    switch(tree.label) {
+        case "\\underbrace":
+            return build_typst_function("underbrace", body_typ);
+        case "\\overbrace":
+            return build_typst_function("overbrace", body_typ);
+        default:
+            console.warn(`Warning: The horizBrace label "${tree.label}" is not recognized.`);
+            return "";
+    }
+}
+
 function build_typst_function(functionName, args) {
     let argsStrArray = [];
 
