@@ -476,6 +476,10 @@ build_functions.horizBrace = function (tree) {
     }
 }
 
+build_functions.hbox = function (tree) {
+    return build_expression(tree.body);
+}
+
 function build_typst_function(functionName, args) {
     let argsStrArray = [];
 
