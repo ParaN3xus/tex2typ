@@ -541,9 +541,9 @@ export const atomMapping = {
 }
 
 export const lrMapping = {
-    ...atomMapping, 
     ...textordMapping,
-    ...mathordMapping
+    ...mathordMapping,
+    ...atomMapping, 
 }
 
 export const accentMapping = {

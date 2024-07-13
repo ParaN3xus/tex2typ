@@ -1,5 +1,5 @@
 import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
-import { decodeLatexEscape, encodeTypstEscape } from "./escape.js"
+import { decodeLatexEscape, encodeTypstFunctionEscape } from "./escape.js"
 
 var build_functions = {}
 
@@ -59,8 +59,7 @@ build_functions.text = function (tree) {
                 return `"${mergedText}"`;
             }
         }
-        return `upright( ${build_expression(tree.body)} )`;
-
+        return build_typst_function(upright, build_expression(tree.body));
     } else {
         return tree.body.map(node => build_expression(node)).join(' ');
     }
@@ -68,10 +67,18 @@ build_functions.text = function (tree) {
 
 build_functions.supsub = function (tree) {
     var base_typ = build_expression(tree.base);
+    if(base_typ == undefined || base_typ.trim() === "") {
+        base_typ = "zwj";
+    }
+
     var sub_typ = "", sup_typ = "";
     var res;
     if (tree.sub) {
-        sub_typ = ` _ ( ${build_expression(tree.sub)} )`;
+        sub_typ = build_expression(tree.sub);
+
+        if (sub_typ.trim() != "") {
+            sub_typ = ` _ ( ${sub_typ} )`;
+        }
     }
 
     if (tree.sup) {
@@ -85,7 +92,11 @@ build_functions.supsub = function (tree) {
             }
         }
 
-        sup_typ = ` ^ ( ${build_expression(tree.sup)} )`;
+        sup_typ = build_expression(tree.sup);
+
+        if (sup_typ.trim() != "") {
+            sup_typ = ` ^ ( ${sup_typ} )`;
+        }
     }
     return `${base_typ}${sub_typ}${sup_typ}`;
 }
@@ -105,10 +116,10 @@ build_functions.sqrt = function (tree) {
     var body = build_expression(tree.body);
     if (tree.index) {
         var index = build_expression(tree.index);
-        return `sqrt( ${index} , ${body} )`;
+        return build_typst_function("sqrt", [index, body]);
     }
     else {
-        return `sqrt( ${body} )`;
+        return build_typst_function("sqrt", body);
     }
 }
 
@@ -156,7 +167,7 @@ build_functions.leftright = function (tree) {
         }
 
         // vec
-        if(tree.body[0].cols.length == 1) {
+        if (tree.body[0].cols.length == 1) {
             return build_typst_vec(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
         }
 
@@ -169,6 +180,17 @@ build_functions.leftright = function (tree) {
     }
 
     var body_typ = build_expression(tree.body)
+
+    // mid
+    if (left === "." && right != ".") {
+        let mid = right_typ;
+        return `${build_expression("mid", mid)} ${body_typ}`;
+
+    } else if(left != "." && right === ".") {
+        let mid = left_typ;
+        return `${body_typ} ${build_expression("mid", mid)}`;
+    }
+
 
     // auto lr
     if ((left === '(' && right === ')') ||
@@ -187,7 +209,7 @@ build_functions.leftright = function (tree) {
         return `round( ${body_typ} )`;
     }
     else {
-        return `lr( ${left_typ} ${body_typ} ${right_typ} )`
+        return build_typst_function("lr", `${left_typ} ${body_typ} ${right_typ}`);
     }
 }
 
@@ -200,10 +222,10 @@ build_functions.accent = function (tree) {
 
     if (label in accentMapping) {
         accent_typ = accentMapping[label];
-        res = `${accent_typ}( ${base_typ} )`;
+        res = build_typst_function(accent_typ, base_typ);
     } else if (label in atomMapping) {
         accent_typ = atomMapping[label];
-        res = `${accent_typ}( ${base_typ} )`;
+        res = build_typst_function(accent_typ, base_typ);
     } else {
         switch (label) {
             case "\\bcancel":
@@ -275,7 +297,7 @@ build_functions.op = function (tree) {
         }
 
         if (limits) {
-            return `limits( ${build_expression(tree.body)} )`;
+            return build_typst_function("limits", build_expression(tree.body));
         }
         return build_expression(tree.body);
     }
@@ -299,7 +321,7 @@ build_functions.operatorname = function (tree) {
     }
     const mergedOp = build_expression(tree.body);
 
-    return `op( upright( ${mergedOp} ) )`;
+    return build_typst_function("op", build_typst_function("upright", mergedOp));
 }
 
 
@@ -318,11 +340,11 @@ build_functions.font = function (tree) {
             if (allLiteral) {
                 const mergedText = tree.body.body.map(element => element.text).join('');
                 if (mergedText.length > 1) {
-                    return `bold( "${mergedText}" )`;
+                    return build_typst_function("bold", mergedText);
                 }
             }
         }
-        return `bold( upright( ${build_expression(tree.body)} ) )`;
+        return build_typst_function("bold", build_typst_function("upright", mergedOp));
     } else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
         fontCommand = font;
@@ -344,12 +366,11 @@ build_functions.font = function (tree) {
                 }
             }
 
-            return `upright( ${mergedText} )`
+            return build_typst_function("upright", mergedText);
         } else if (tree.body.text === "d") {
             return "dif";
         }
     }
-
 
     return `${fontCommand}( ${build_expression(tree.body)} )`;
 }
@@ -361,12 +382,12 @@ build_functions.delimsizing = function (tree) {
     if (tree.delim in atomMapping) {
         delim_typ = atomMapping[tree.delim];
     } else {
-        delim_typ = encodeTypstEscape(decodeLatexEscape(tree.delim));
+        delim_typ = decodeLatexEscape(tree.delim);
     }
 
     var size_typ = sizes[tree.size - 1];
 
-    return `lr( size: #${size_typ} , ${delim_typ} )`;
+    return build_typst_function("lr", [["size", `#${size_typ}`], delim_typ]);
 }
 
 build_functions.sizing = function (tree) {
@@ -383,11 +404,11 @@ build_functions.styling = function (tree) {
 }
 
 build_functions.overline = function (tree) {
-    return `overline( ${build_expression(tree.body)} )`;
+    return build_typst_function("overline", build_expression(tree.body));
 }
 
 build_functions.underline = function (tree) {
-    return `underline( ${build_expression(tree.body)} )`;
+    return build_typst_function("underline", build_expression(tree.body));
 }
 
 build_functions.xArrow = function (tree) {
@@ -417,16 +438,18 @@ build_functions.rlap = function (tree) {
 }
 
 build_functions.phantom = function (tree) {
-    return `hide( ${build_expression(tree.body)} )`;
+    // ignore
+    return;
+    //return build_typst_function("hide", build_expression(tree.body));
 }
 
 build_functions.mclass = function (tree) {
     // TODO: don't fucking scipts everything
-    return `scripts( ${build_expression(tree.body)} )`;
+    return build_typst_function("scripts", build_expression(tree.body));
 }
 
-build_functions.htmlmathml = function(tree) {
-    if(Array.isArray(tree.mathml) && Array.isArray(tree.mathml[0].body) && "text" in tree.mathml[0].body[0]) {
+build_functions.htmlmathml = function (tree) {
+    if (Array.isArray(tree.mathml) && Array.isArray(tree.mathml[0].body) && "text" in tree.mathml[0].body[0]) {
         const text = tree.mathml[0].body[0].text;
         switch (text) {
             case "≠":
@@ -440,6 +463,59 @@ build_functions.htmlmathml = function(tree) {
     return build_expression(tree.html);
 }
 
+build_functions.horizBrace = function (tree) {
+    let body_typ = build_expression(tree.base);
+    switch (tree.label) {
+        case "\\underbrace":
+            return build_typst_function("underbrace", body_typ);
+        case "\\overbrace":
+            return build_typst_function("overbrace", body_typ);
+        default:
+            console.warn(`Warning: The horizBrace label "${tree.label}" is not recognized.`);
+            return "";
+    }
+}
+
+build_functions.hbox = function (tree) {
+    return build_expression(tree.body);
+}
+
+function build_typst_function(functionName, args) {
+    let argsStrArray = [];
+
+    if (!args || args.length === 0) {
+        return '';
+    }
+
+    if (typeof args === 'string') {
+        return `${functionName}( ${encodeTypstFunctionEscape(args)} )`;
+    }
+
+    args.forEach(arg => {
+        if (typeof arg === 'string') {
+            if (arg.trim() === '') {
+                argsStrArray.push('()');
+            } else {
+                argsStrArray.push(encodeTypstFunctionEscape(arg));
+            }
+        } else if (Array.isArray(arg) && arg.length === 2) {
+            const [key, value] = arg;
+            if (value.trim() != '') {
+                argsStrArray.push(`${key}: ${encodeTypstFunctionEscape(value)}`);
+            }
+        }
+    });
+
+    if (argsStrArray.length === 0) {
+        return '';
+    }
+
+    const argsStr = argsStrArray.join(' , ');
+
+    return `${functionName}( ${argsStr} )`;
+}
+
+
 function build_typst_mat(array, delim) {
     var body_typ = "";
     var body = array.body;
@@ -451,10 +527,9 @@ function build_typst_mat(array, delim) {
     ).join(" ; ");
 
     if (delim) {
-        var delim_typ = `delim: ${delim}`;
-        return `mat( ${delim_typ} , ${body_typ} )`;
+        return build_typst_function("mat", [["delim", delim], body_typ]);
     }
-    return `mat( ${body_typ} )`;
+    return build_typst_function("mat", [body_typ]);
 }
 
 function build_typst_vec(array, delim) {
@@ -466,10 +541,9 @@ function build_typst_vec(array, delim) {
     ).join(" , ");
 
     if (delim) {
-        var delim_typ = `delim: ${delim}`;
-        return `vec( ${delim_typ} , ${body_typ} )`;
+        return build_typst_function("vec", [["delim", delim], body_typ]);
     }
-    return `vec( ${body_typ} )`;
+    return build_typst_function("vec", [body_typ]);
 }
 
 function build_typst_case(array, delim, rev) {

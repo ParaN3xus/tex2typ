@@ -22,6 +22,8 @@ export function decodeLatexEscape(input) {
 
 const typstEscapes = {
     '\\': '\\\\',
+    ',': '\\,',
+    ';': '\\;',
     '{': '\\{',
     '}': '\\}',
     '[': '\\[',
@@ -38,6 +40,20 @@ const typstEscapes = {
 export function encodeTypstEscape(input) {
     let output = input;
     for (const [key, value] of Object.entries(typstEscapes)) {
+        output = output.split(key).join(value);
+    }
+    return output;
+}
+
+const typstFunctionEscapes = {
+    '\\': '\\\\',
+    ',': '\\,',
+    ';': '\\;',
+};
+
+export function encodeTypstFunctionEscape(input) {
+    let output = input;
+    for (const [key, value] of Object.entries(typstFunctionEscapes)) {
         output = output.split(key).join(value);
     }
     return output;
