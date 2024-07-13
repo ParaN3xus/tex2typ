@@ -11,7 +11,7 @@ A tool to rebuild [Typst](https://typst.app/) mathematical formulas from [KaTeX]
 
 - Focuses on ensuring a generally similar visual effect rather than an identical one, aiming to make the formulas look like they were written by a human.
 - The generated formulas do not rely on any special Typst environments or packages and can be compiled directly with the standard Typst.
-- We did't provide any Typst package.
+- We didn't provide any Typst package.
 
 ## TODO
 
