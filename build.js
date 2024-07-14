@@ -57,7 +57,7 @@ build_functions.text = function (tree) {
                 return `"${mergedText}"`;
             }
         }
-        return build_typst_function(upright, build_expression(tree.body));
+        return build_typst_function("upright", build_expression(tree.body));
     } else {
         return tree.body.map(node => build_expression(node)).join(' ');
     }
@@ -136,6 +136,10 @@ build_functions.array = function (tree) {
 
 
 build_functions.leftright = function (tree) {
+    const cases = [
+        "{", "}", "[", "]", "(", ")"
+    ];
+
     var left = tree.left;
     var right = tree.right;
 
@@ -145,8 +149,10 @@ build_functions.leftright = function (tree) {
         left_typ = lrMapping[left];
     } else {
         left_typ = left;
-        is_literal_left = true;
     }
+    if(cases.includes(left_typ)) {
+        is_literal_left = true;
+    } 
 
     var is_literal_right = false;
     var right_typ = "";
@@ -154,6 +160,8 @@ build_functions.leftright = function (tree) {
         right_typ = lrMapping[right];
     } else {
         right_typ = right;
+    }
+    if(cases.includes(right_typ)) {
         is_literal_right = true;
     }
 
@@ -516,9 +524,8 @@ function build_typst_function(functionName, args) {
 
 function build_typst_mat(array, delim) {
     var body_typ = "";
-    var body = array.body;
 
-    body_typ = body.map(
+    body_typ = array.map(
         row => row.map(
             cell => build_expression(cell)
         ).join(" , ")
