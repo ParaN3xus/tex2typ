@@ -39,7 +39,7 @@ function preprocess(exp) {
 
 function convert(expression) {
     try {
-        var tree = katex.__parse(preprocess(expression), {});
+        var tree = katex.__parse(preprocess(expression), { displayMode: true });
     } catch (e) {
         console.warn(`Warning: Failed to parse: ${e}, skipping.`);
         return "";
@@ -94,16 +94,16 @@ async function process_lst() {
     });
 }
 
-
 async function process_csv(csv_name) {
     const workspace = process.cwd();
     const csvName = csv_name;
-    const inputFilePath = path.join(workspace, `${csvName}`);
+    const inputFilePath = path.join(workspace, csvName);
     const outputFilePath = path.join(workspace, `typ_${csvName}`);
     const failedFilePath = path.join(workspace, 'failed.txt');
     const failedLines = [];
     const outputData = [];
 
+    console.log(`Processing CSV file: ${inputFilePath}`);
 
     const parser = fs.createReadStream(inputFilePath)
         .pipe(parse({ columns: true, skip_empty_lines: true }));
@@ -121,26 +121,29 @@ async function process_csv(csv_name) {
         }
     }
 
+    console.log(`Finished processing CSV file. Writing to output file: ${outputFilePath}`);
+
     const csvWriter = fs.createWriteStream(outputFilePath);
     const stringifier = stringify({ header: true, columns: ['name', 'formula'] });
+
     stringifier.pipe(csvWriter);
     outputData.forEach((row) => {
-        stringifier.write([row.name, row.formula]);
+        stringifier.write(row);
     });
     stringifier.end();
 
-    console.log("done")
+    await new Promise((resolve) => {
+        csvWriter.on('finish', resolve);
+    });
+
+    console.log("CSV writing done");
 
     if (failedLines.length > 0) {
-        fs.writeFile(failedFilePath, failedLines.join('\n'), 'utf8', (writeErr) => {
-            if (writeErr) {
-                console.error('Error writing failed lines to file:', writeErr);
-            } else {
-                console.log('Successfully wrote failed lines to file:', failedFilePath);
-            }
-        });
+        await fs.promises.writeFile(failedFilePath, failedLines.join('\n'), 'utf8');
+        console.log('Successfully wrote failed lines to file:', failedFilePath);
     }
 }
+
 
 async function main() {
     const args = process.argv.slice(2);
@@ -158,7 +161,7 @@ async function main() {
     } else {
         console.log(`Function ${functionName} not found`);
     }
-    process.exit(0)
+    process.exit(0);
 }
 
 main();
