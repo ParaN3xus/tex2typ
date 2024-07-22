@@ -5,6 +5,7 @@ import readline from 'readline';
 import { build_expression } from './build.js';
 import { fileURLToPath } from 'url';
 
+// https://github.com/harvardnlp/im2markup/blob/master/scripts/preprocessing/preprocess_latex.js
 function preprocess(exp) {
     if (exp[0] == "%") {
         exp = exp.substr(1, exp.length - 1);
@@ -18,14 +19,14 @@ function preprocess(exp) {
         exp = exp.replace('$', ' ');
         exp = exp.replace(/\\label{.*?}/, "");
     }
-    
+
     if (exp.indexOf("matrix") == -1 && exp.indexOf("cases") == -1 &&
         exp.indexOf("array") == -1 && exp.indexOf("begin") == -1) {
         while (exp.indexOf("\\\\") !== -1) {
             exp = exp.replace(/\\\\/, "\\,");
         }
     }
-    
+
     while (exp.indexOf("{\\rm") !== -1 || exp.indexOf("{ \\rm") !== -1 || exp.indexOf("\\rm{") !== -1) {
         exp = exp.replace(/{\\rm/, "\\mathrm{");
         exp = exp.replace(/{ \\rm/, "\\mathrm{");
@@ -81,7 +82,7 @@ async function main() {
                 var latexString = lines[index]
                 console.log(`formula [${index}]:`, latexString);
                 console.log(convert(latexString));
-    
+
                 index++;
                 if (index === lines.length) {
                     rl.close();
