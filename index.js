@@ -4,6 +4,8 @@ import path from 'path';
 import readline from 'readline';
 import { build_expression } from './build.js';
 import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse';
+import { stringify } from 'csv-stringify';
 
 // https://github.com/harvardnlp/im2markup/blob/master/scripts/preprocessing/preprocess_latex.js
 function preprocess(exp) {
@@ -94,12 +96,11 @@ async function process_lst() {
 
 
 async function process_csv(csv_name) {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
+    const workspace = process.cwd();
     const csvName = csv_name;
-    const inputFilePath = path.join(__dirname, `${csvName}.csv`);
-    const outputFilePath = path.join(__dirname, `${csvName}_typ.csv`);
-    const failedFilePath = path.join(__dirname, 'failed.txt');
+    const inputFilePath = path.join(workspace, `${csvName}`);
+    const outputFilePath = path.join(workspace, `typ_${csvName}`);
+    const failedFilePath = path.join(workspace, 'failed.txt');
     const failedLines = [];
     const outputData = [];
 
@@ -146,13 +147,13 @@ async function main() {
     const functionName = args[0];
 
     if (functionName === 'lst') {
-        process_lst();
+        await process_lst();
     } else if (functionName === 'csv') {
         const fileName = args[1];
         if (!fileName) {
             console.log("Please provide a file name for process_csv");
         } else {
-            process_csv(fileName);
+            await process_csv(fileName);
         }
     } else {
         console.log(`Function ${functionName} not found`);
