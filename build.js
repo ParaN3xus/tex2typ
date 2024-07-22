@@ -7,7 +7,7 @@ build_functions.atom = function (tree) {
     if (tree.text in atomMapping) {
         return atomMapping[tree.text];
     } else {
-        console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
+        // console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
         return tree.text;
     }
 }
@@ -65,7 +65,7 @@ build_functions.text = function (tree) {
 
 build_functions.supsub = function (tree) {
     var base_typ = build_expression(tree.base);
-    if(base_typ == undefined || base_typ.trim() === "") {
+    if (base_typ == undefined || base_typ.trim() === "") {
         base_typ = "zwj";
     }
 
@@ -150,9 +150,9 @@ build_functions.leftright = function (tree) {
     } else {
         left_typ = left;
     }
-    if(cases.includes(left_typ)) {
+    if (cases.includes(left_typ)) {
         is_literal_left = true;
-    } 
+    }
 
     var is_literal_right = false;
     var right_typ = "";
@@ -161,7 +161,7 @@ build_functions.leftright = function (tree) {
     } else {
         right_typ = right;
     }
-    if(cases.includes(right_typ)) {
+    if (cases.includes(right_typ)) {
         is_literal_right = true;
     }
 
@@ -192,7 +192,7 @@ build_functions.leftright = function (tree) {
         let mid = right_typ;
         return `${build_expression("mid", mid)} ${body_typ}`;
 
-    } else if(left != "." && right === ".") {
+    } else if (left != "." && right === ".") {
         let mid = left_typ;
         return `${body_typ} ${build_expression("mid", mid)}`;
     }
