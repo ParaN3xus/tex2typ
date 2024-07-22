@@ -62,7 +62,7 @@ const rl = readline.createInterface({
 });
 
 
-async function main() {
+async function process_lst() {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -90,6 +90,74 @@ async function main() {
             }
         });
     });
+}
+
+
+async function process_csv(csv_name) {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const csvName = csv_name;
+    const inputFilePath = path.join(__dirname, `${csvName}.csv`);
+    const outputFilePath = path.join(__dirname, `${csvName}_typ.csv`);
+    const failedFilePath = path.join(__dirname, 'failed.txt');
+    const failedLines = [];
+    const outputData = [];
+
+
+    const parser = fs.createReadStream(inputFilePath)
+        .pipe(parse({ columns: true, skip_empty_lines: true }));
+
+    for await (const row of parser) {
+        const name = row.image_filename;
+        let formula = row.latex;
+
+        try {
+            formula = convert(formula);
+            outputData.push({ name, formula });
+        } catch (err) {
+            console.error(`Failed to process formula for ${name}:`, err);
+            failedLines.push(formula);
+        }
+    }
+
+    const csvWriter = fs.createWriteStream(outputFilePath);
+    const stringifier = stringify({ header: true, columns: ['name', 'formula'] });
+    stringifier.pipe(csvWriter);
+    outputData.forEach((row) => {
+        stringifier.write([row.name, row.formula]);
+    });
+    stringifier.end();
+
+    console.log("done")
+
+    if (failedLines.length > 0) {
+        fs.writeFile(failedFilePath, failedLines.join('\n'), 'utf8', (writeErr) => {
+            if (writeErr) {
+                console.error('Error writing failed lines to file:', writeErr);
+            } else {
+                console.log('Successfully wrote failed lines to file:', failedFilePath);
+            }
+        });
+    }
+}
+
+async function main() {
+    const args = process.argv.slice(2);
+    const functionName = args[0];
+
+    if (functionName === 'lst') {
+        process_lst();
+    } else if (functionName === 'csv') {
+        const fileName = args[1];
+        if (!fileName) {
+            console.log("Please provide a file name for process_csv");
+        } else {
+            process_csv(fileName);
+        }
+    } else {
+        console.log(`Function ${functionName} not found`);
+    }
+    process.exit(0)
 }
 
 main();
