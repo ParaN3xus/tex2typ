@@ -19,6 +19,16 @@ A tool to rebuild [Typst](https://typst.app/) mathematical formulas from [KaTeX]
 - [ ] Refactor and optimize the code logic to reduce redundancy.
 - [ ] Fix the issue with incorrect delimiter passing when reconstructing functions like `cases` and `vec`.
 
+## Credits
+This project makes use of the following open-source projects:
+
+- [KaTeX](https://github.com/KaTeX/KaTeX): Fast math typesetting for the web.
+- [mitex](https://github.com/mitex-rs/mitex): LaTeX support for Typst, powered by Rust and WASM.
+- [im2markup](https://github.com/harvardnlp/im2markup/): Neural model for converting Image-to-Markup.
+
+Thanks to the developers and contributors of these projects for their hard work and dedication.
+
+
 ## LICENSE
 
 MIT
