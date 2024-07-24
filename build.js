@@ -197,26 +197,14 @@ build_functions.leftright = function (tree) {
         return `${body_typ} ${build_expression("mid", mid)}`;
     }
 
-
     // auto lr
-    if ((left === '(' && right === ')') ||
-        (left === '[' && right === ']') ||
-        (left === '{' && right === '}')) {
-        return `${left} ${body_typ} ${right}`;
-    } else if (left === '|' && right === '|') {
-        return `abs( ${body_typ} )`;
-    } else if (left === '\\|' && right === '\\|') {
-        return `norm( ${body_typ} )`;
-    } else if (left === '\\lfloor' && right === '\\rfloor') {
-        return `floor( ${body_typ} )`;
-    } else if (left === '\\lceil' && right === '\\rceil') {
-        return `ceil( ${body_typ} )`;
-    } else if (left === '\\lfloor' && right === '\\rceil') {
-        return `round( ${body_typ} )`;
+    const [is_auto_lr, res] = build_typst_autolr(left, right, body);
+    if (is_auto_lr) {
+        return res;
     }
-    else {
-        return build_typst_function("lr", `${left_typ} ${body_typ} ${right_typ}`);
-    }
+
+    return build_typst_function("lr", `${left_typ} ${body_typ} ${right_typ}`);
+
 }
 
 build_functions.accent = function (tree) {
@@ -563,6 +551,26 @@ function build_typst_case(array, delim, rev) {
     param += array.body.map(row => row.map(cell => build_expression(cell)).join(" & ")).join(" , ");
 
     return `cases( ${param} )`;
+}
+
+function build_typst_autolr(left, right, body_typ) {
+    const pairs = [
+        { lefts: ['(', '[', '{'], rights: [')', ']', '}'], format: (body, l, r) => `${l} ${body} ${r}` },
+        { lefts: ['\\lbrack'], rights: ['\\rbrack'], format: (body) => `[ ${body} ]` },
+        { lefts: ['|', '\\vert'], rights: ['|', '\\vert'], format: (body) => `abs( ${body} )` },
+        { lefts: ['\\|', '\\Vert'], rights: ['\\|', '\\Vert'], format: (body) => `norm( ${body} )` },
+        { lefts: ['\\lfloor'], rights: ['\\rfloor'], format: (body) => `floor( ${body} )` },
+        { lefts: ['\\lceil'], rights: ['\\rceil'], format: (body) => `ceil( ${body} )` },
+        { lefts: ['\\lfloor'], rights: ['\\rceil'], format: (body) => `round( ${body} )` },
+    ];
+
+    for (const pair of pairs) {
+        if (pair.lefts.includes(left) && pair.rights.includes(right)) {
+            return [true, pair.format(body_typ, left, right)];
+        }
+    }
+
+    return [false, null];
 }
 
 function isDigitOrDot(char) {
