@@ -7,7 +7,7 @@ build_functions.atom = function (tree) {
     if (tree.text in atomMapping) {
         return atomMapping[tree.text];
     } else {
-        // console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
+        console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
         return tree.text;
     }
 }
@@ -198,7 +198,7 @@ build_functions.leftright = function (tree) {
     }
 
     // auto lr
-    const [is_auto_lr, res] = build_typst_autolr(left, right, body);
+    const [is_auto_lr, res] = build_typst_autolr(left, right, body_typ);
     if (is_auto_lr) {
         return res;
     }
@@ -488,7 +488,7 @@ function build_typst_function(functionName, args) {
     args.forEach(arg => {
         if (typeof arg === 'string') {
             if (arg.trim() === '') {
-                argsStrArray.push('()');
+                argsStrArray.push('( )');
             } else {
                 argsStrArray.push(encodeTypstFunctionEscape(arg));
             }
@@ -512,17 +512,19 @@ function build_typst_function(functionName, args) {
 
 function build_typst_mat(array, delim) {
     var body_typ = "";
+    var body = array.body;
 
-    body_typ = array.map(
+    body_typ = body.map(
         row => row.map(
             cell => build_expression(cell)
         ).join(" , ")
     ).join(" ; ");
 
     if (delim) {
-        return build_typst_function("mat", [["delim", delim], body_typ]);
+        var delim_typ = `delim: ${delim}`;
+        return `mat( ${delim_typ} , ${body_typ} )`;
     }
-    return build_typst_function("mat", [body_typ]);
+    return `mat( ${body_typ} )`;
 }
 
 function build_typst_vec(array, delim) {
