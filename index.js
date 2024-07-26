@@ -64,11 +64,10 @@ const rl = readline.createInterface({
 });
 
 
-async function process_lst() {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-
-    const filePath = path.join(__dirname, 'test.txt');
+async function process_lst(filename) {
+    const workspace = process.cwd();
+    const filePath = path.resolve(workspace, filename);
+    const baseFilename = path.basename(filename);
 
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
@@ -79,18 +78,37 @@ async function process_lst() {
         const lines = data.split('\n');
         var index = 0;
 
-        rl.on('line', () => {
-            if (index < lines.length) {
-                var latexString = lines[index]
-                console.log(`formula [${index}]:`, latexString);
-                console.log(convert(latexString));
-
-                index++;
-                if (index === lines.length) {
-                    rl.close();
-                }
-            }
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
         });
+
+        if (filename === 'test.txt') {
+            rl.on('line', () => {
+                if (index < lines.length) {
+                    var latexString = lines[index];
+                    console.log(`formula [${index}]:`, latexString);
+                    console.log(convert(latexString));
+
+                    index++;
+                    if (index === lines.length) {
+                        rl.close();
+                    }
+                }
+            });
+        } else {
+            const convertedFilePath = path.join(path.dirname(filePath), `converted_${baseFilename}`);
+            const writeStream = fs.createWriteStream(convertedFilePath, { flags: 'w' });
+
+            lines.forEach((latexString, index) => {
+                try {
+                    writeStream.write(`${convert(latexString)}\n`);
+                } catch (convertErr) {
+                    console.log(`Error converting formula [${index}]: ${convertErr}\n`);
+                }
+            });
+            writeStream.end();
+        }
     });
 }
 
@@ -150,7 +168,12 @@ async function main() {
     const functionName = args[0];
 
     if (functionName === 'lst') {
-        await process_lst();
+        const fileName = args[1];
+        if (!fileName) {
+            await process_lst("test.txt");
+        } else {
+            await process_lst(fileName);
+        }
     } else if (functionName === 'csv') {
         const fileName = args[1];
         if (!fileName) {
