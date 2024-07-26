@@ -50,6 +50,7 @@ export const mathordMapping = {
 }
 
 export const textordMapping = {
+    "/": "slash",
     "\\_": "\\_",
     "\\|": "||",
     "\\%": "%",
@@ -543,7 +544,7 @@ export const atomMapping = {
 export const lrMapping = {
     ...textordMapping,
     ...mathordMapping,
-    ...atomMapping, 
+    ...atomMapping,
 }
 
 export const accentMapping = {
