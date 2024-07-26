@@ -167,21 +167,27 @@ build_functions.leftright = function (tree) {
 
     if (tree.body.length == 1 &&
         tree.body[0].type === "array") {
-        // mat
-        if (tree.body[0].from === "matrix") {
+
+        // case
+        if (left === "." && right != ".") {
+            return build_typst_case(tree.body[0], is_literal_right ? `"${right_typ}"` : right_typ, true);
+        } else if (right === "." && left != ".") {
+            return build_typst_case(tree.body[0], is_literal_left ? `"${left_typ}"` : right_typ, false);
+        }
+
+        // vec or mat
+        if (tree.body[0].from != "align") {
+            if (tree.body[0].cols.length == 1) {
+                // vec
+                return build_typst_vec(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
+            }
+            // mat
             return build_typst_mat(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ);
         }
 
         // vec
         if (tree.body[0].cols.length == 1) {
             return build_typst_vec(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ)
-        }
-
-        // case
-        if (left === "." && right != ".") {
-            return build_typst_case(tree.body[0], is_literal_right ? `"${right_typ}"` : right_typ, true);
-        } else if (right === "." && left != ".") {
-            return build_typst_case(tree.body[0], is_literal_left ? `"${left_typ}"` : left_typ, false);
         }
     }
 
@@ -255,7 +261,8 @@ build_functions.kern = function (tree) {
                     return `#v( ${number}em )`;
             }
         default:
-            console.warn(`Warning: The unit "${unit}" is not recognized.`);
+            ;
+        //console.warn(`Warning: The unit "${unit}" is not recognized.`);
     }
 }
 
@@ -439,7 +446,8 @@ build_functions.phantom = function (tree) {
 
 build_functions.mclass = function (tree) {
     // TODO: don't fucking scipts everything
-    return build_typst_function("scripts", build_expression(tree.body));
+    // return build_typst_function("scripts", build_expression(tree.body));
+    return build_expression(tree.body);
 }
 
 build_functions.htmlmathml = function (tree) {
@@ -520,7 +528,7 @@ function build_typst_mat(array, delim) {
         ).join(" , ")
     ).join(" ; ");
 
-    if (delim) {
+    if (delim && delim != "\"(\"") {
         var delim_typ = `delim: ${delim}`;
         return `mat( ${delim_typ} , ${body_typ} )`;
     }
@@ -535,10 +543,11 @@ function build_typst_vec(array, delim) {
         row => build_expression(row[0])
     ).join(" , ");
 
-    if (delim) {
-        return build_typst_function("vec", [["delim", delim], body_typ]);
+    if (delim && delim != "\"(\"") {
+        var delim_typ = `delim: ${delim}`;
+        return `vec( ${delim_typ} , ${body_typ} )`;
     }
-    return build_typst_function("vec", [body_typ]);
+    return `vec( ${body_typ} )`;
 }
 
 function build_typst_case(array, delim, rev) {
@@ -550,7 +559,11 @@ function build_typst_case(array, delim, rev) {
         param += `reverse: #true , `
     }
 
-    param += array.body.map(row => row.map(cell => build_expression(cell)).join(" & ")).join(" , ");
+    param += array.body.map(
+        row => row.map(
+            cell => encodeTypstFunctionEscape(build_expression(cell))
+        ).join(" & ")
+    ).join(" , ");
 
     return `cases( ${param} )`;
 }
@@ -609,7 +622,7 @@ export function build_expression(tree) {
         }
     } else {
         // null
+        console.warn(`Warning: null tree!`)
         return "zwj";
-        console.warn("Warning: null tree!")
     }
 }
