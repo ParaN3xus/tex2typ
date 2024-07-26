@@ -375,13 +375,13 @@ build_functions.delimsizing = function (tree) {
     var delim_typ;
     if (tree.delim in atomMapping) {
         delim_typ = atomMapping[tree.delim];
+    } else if (tree.delim in textordMapping) {
+        delim_typ = textordMapping[tree.delim];
     } else {
         delim_typ = decodeLatexEscape(tree.delim);
     }
 
-    var size_typ = sizes[tree.size - 1];
-
-    return build_typst_function("lr", [["size", `#${size_typ}`], delim_typ]);
+    return delim_typ;
 }
 
 build_functions.sizing = function (tree) {
