@@ -50,6 +50,7 @@ export const mathordMapping = {
 }
 
 export const textordMapping = {
+    "\\varvdots": "dots.v",
     "/": "slash",
     "\\_": "\\_",
     "\\|": "||",
