@@ -161,7 +161,6 @@ async function main() {
     } else {
         console.log(`Function ${functionName} not found`);
     }
-    process.exit(0);
 }
 
 main();
