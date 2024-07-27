@@ -49,6 +49,10 @@ const typstFunctionEscapes = {
     '\\': '\\\\',
     ',': '\\,',
     ';': '\\;',
+    '_': '\\_',
+    '^': '\\^',
+    '$': '\\$',
+    '&': '\\&',
 };
 
 export function encodeTypstFunctionEscape(input) {
