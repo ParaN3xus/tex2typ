@@ -126,7 +126,12 @@ build_functions.sqrt = function (tree, in_function) {
 build_functions.array = function (tree, in_function) {
     if (tree.type === "array" &&
         tree.from === "matrix") {
-        return build_typst_mat(tree, "#none")
+        throw Error("Using matrix as align");
+        // this is because all common matrixes with delims are processed in build_functions.lr
+        // things here are thost matrixes without delims, but most of them are intended to be
+        // align.
+        // to keep out dataset clean, we decided to not to convert thost equations
+        return build_typst_mat(tree, "#none");
     } else {
         return tree.body.map(
             row => row.map(
