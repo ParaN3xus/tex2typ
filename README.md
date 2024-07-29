@@ -17,7 +17,7 @@ A tool to rebuild [Typst](https://typst.app/) mathematical formulas from [KaTeX]
 
 - [ ] Improve the handling of spaces in TeX formulas.
 - [ ] Refactor and optimize the code logic to reduce redundancy.
-- [ ] Fix the issue with incorrect delimiter passing when reconstructing functions like `cases` and `vec`.
+- [x] Fix the issue with incorrect delimiter passing when reconstructing functions like `cases` and `vec`.
 
 ## Credits
 This project makes use of the following open-source projects:
