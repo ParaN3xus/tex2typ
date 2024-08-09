@@ -116,7 +116,9 @@ async function process_csv(csv_name) {
     const workspace = process.cwd();
     const csvName = csv_name;
     const inputFilePath = path.join(workspace, csvName);
-    const outputFilePath = path.join(workspace, `typ_${csvName}`);
+
+    const outputFilePath = path.join(path.dirname(inputFilePath), `typ_${path.basename(inputFilePath)}`);
+
     const failedFilePath = path.join(workspace, 'failed.txt');
     const failedLines = [];
     const outputData = [];
