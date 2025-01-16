@@ -45,6 +45,15 @@ build_functions.ordgroup = function (tree, in_function) {
 }
 
 build_functions.text = function (tree, in_function) {
+    if ("font" in tree) {
+        if (tree.font == "\\textrm") {
+            const res = build_typst_upright_or_str(tree)
+            if (res != null) {
+                return res;
+            }
+        }
+    }
+
     const allTextord = tree.body.every(element => element.type === 'textord');
 
     var mergedText;
@@ -289,7 +298,7 @@ build_functions.spacing = function (tree, in_function, in_str = false) {
         return " "
     }
     if ("text" in tree) {
-        if (tree.text == "\\ ") {
+        if (["\\ ", " "].includes(tree.text)) {
             return "space"
         }
     }
@@ -376,39 +385,9 @@ build_functions.font = function (tree, in_function) {
     }
 
     if (fontCommand === "upright") {
-        const allOrd =
-            tree.body.type === "ordgroup" &&
-            tree.body.body.every(
-                element => ['mathord', 'textord', 'spacing', 'atom'].includes(element.type)
-            );
-
-        if (allOrd) {
-            const allLiteral = tree.body.body.every(element => !element.text.startsWith("\\") || element.type == "spacing");
-            if (allLiteral) {
-                const mergedText = tree.body.body.map(element => {
-                    const text = element.text
-                    if (element.type == "spacing") {
-                        return " "
-                    } else {
-                        return text
-                    }
-                }).join('');
-
-                if (mergedText.length > 1) {
-                    return `"${mergedText}"`;
-                }
-
-                if (mergedText === "d") {
-                    return "dif";
-                }
-            }
-
-            const mergedText = tree.body.body.map(element => {
-                build_expression(element)
-            }).join(' ');
-            return build_typst_function("upright", mergedText);
-        } else if (tree.body.text === "d") {
-            return "dif";
+        const res = build_typst_upright_or_str(tree)
+        if (res != null) {
+            return res;
         }
     }
 
@@ -626,6 +605,56 @@ function build_typst_autolr(left, right, body) {
     }
 
     return [false, null];
+}
+
+function build_typst_upright_or_str(tree) {
+    const ordTypes = ['mathord', 'textord', 'spacing', 'atom']
+
+    let body = null
+    let allOrd = false;
+
+    if (tree.body.type === "ordgroup" &&
+        tree.body.body.every(
+            element => ordTypes.includes(element.type)
+        )) {
+        allOrd = true
+        body = tree.body.body
+    } else if (Array.isArray(tree.body) &&
+        tree.body.every(
+            element => ordTypes.includes(element.type)
+        )) {
+        allOrd = true
+        body = tree.body
+    }
+
+    if (allOrd) {
+        const allLiteral = body.every(element => !element.text.startsWith("\\") || element.type == "spacing");
+        if (allLiteral) {
+            const mergedText = body.map(element => {
+                const text = element.text
+                if (element.type == "spacing") {
+                    return " "
+                } else {
+                    return text
+                }
+            }).join('');
+
+            if (mergedText.length > 1) {
+                return `"${mergedText}"`;
+            }
+
+            if (mergedText === "d") {
+                return "dif";
+            }
+        }
+
+        const mergedText = body.map(element => {
+            build_expression(element)
+        }).join(' ');
+        return build_typst_function("upright", mergedText);
+    } else if ("text" in tree.body && tree.body.text === "d") {
+        return "dif";
+    }
 }
 
 function isDigitOrDot(char) {
