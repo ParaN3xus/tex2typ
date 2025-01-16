@@ -632,28 +632,77 @@ function isDigitOrDot(char) {
     return char === '.' || (char >= '0' && char <= '9');
 }
 
-export function build_expression(tree, in_function) {
-    if (Array.isArray(tree)) {
-        let result = [];
-        let buffer_number = [];
+function getMatchingBracket(openBracket) {
+    const bracketPairs = {
+        '(': ')',
+        '[': ']',
+        '{': '}'
+    };
+    return bracketPairs[openBracket] || '';
+}
 
-        for (let i = 0; i < tree.length; i++) {
-            if (tree[i].type === 'textord' && (isDigitOrDot(tree[i].text))) {
-                buffer_number.push(tree[i]);
-            } else {
-                if (buffer_number.length > 0) {
-                    result.push(buffer_number.map(number => build_expression(number, false)).join(""));
-                    buffer_number = [];
+function build_array(tree, in_function) {
+    let result = [];
+    let buffer_number = [];
+
+    for (let i = 0; i < tree.length; i++) {
+        if (tree[i].type === 'textord' && isDigitOrDot(tree[i].text)) {
+            // continus digits
+            let j = i;
+            while (j + 1 < tree.length &&
+                tree[j + 1].type === 'textord' &&
+                isDigitOrDot(tree[j + 1].text)) {
+                j++;
+            }
+
+            let numbers = tree.slice(i, j + 1);
+            result.push(numbers.map(number => build_expression(number, false)).join(""));
+            i = j; // skip
+        }
+        else if (tree[i].type === 'atom' && tree[i].family === 'open') {
+            // opening and closing
+            if (buffer_number.length > 0) {
+                result.push(buffer_number.map(number => build_expression(number, false)).join(""));
+                buffer_number = [];
+            }
+
+            // find close
+            let openBracket = tree[i].text;
+            let closeBracket = getMatchingBracket(openBracket);
+            let bracketCount = 1;
+            let j;
+
+            for (j = i + 1; j < tree.length; j++) {
+                if (tree[j].type === 'atom' && tree[j].family === 'open' && tree[j].text === openBracket) {
+                    bracketCount++;
+                } else if (tree[j].type === 'atom' && tree[j].family === 'close' && tree[j].text === closeBracket) {
+                    bracketCount--;
+                    if (bracketCount === 0) break;
                 }
+            }
+
+            if (bracketCount === 0) {
+                // found
+                let innerContent = build_array(tree.slice(i + 1, j), false);
+                result.push(openBracket + " " + innerContent + " " + closeBracket);
+                i = j; // skip
+            } else {
+                // not found
                 result.push(build_expression(tree[i], in_function));
             }
+        } else {
+            result.push(build_expression(tree[i], in_function));
         }
+    }
 
-        if (buffer_number.length > 0) {
-            result.push(buffer_number.map(number => build_expression(number, false)).join(""));
-        }
+    return result.join(' ');
+}
 
-        return result.join(' ');
+
+
+export function build_expression(tree, in_function) {
+    if (Array.isArray(tree)) {
+        return build_array(tree);
     } else if (typeof tree === 'object' && tree !== null) {
         if (tree.type in build_functions) {
             return build_functions[tree.type](tree, in_function);
