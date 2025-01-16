@@ -77,7 +77,7 @@ build_functions.text = function (tree, in_function) {
 build_functions.supsub = function (tree, in_function) {
     var base_typ = build_expression(tree.base, false);
     if (base_typ == undefined || base_typ.trim() === "") {
-        base_typ = "zwj";
+        base_typ = "zws";
     }
 
     var sub_typ = "", sup_typ = "";
@@ -95,7 +95,19 @@ build_functions.supsub = function (tree, in_function) {
         if (tree.sup.type === "ordgroup") {
             const allPrime = tree.sup.body.length != 0 && tree.sup.body.every(element => element.text === '\\prime');
             if (allPrime) {
-                sup_typ = " ' ".repeat(tree.sup.body.length).trim();
+                sup_typ = "' ".repeat(tree.sup.body.length).trim();
+
+                return `${base_typ}${sup_typ}${sub_typ}`;
+            }
+
+            // originally ^ zwj'
+            if (tree.sup.body.length == 1
+                && tree.sup.body[0].type == "supsub"
+                && tree.sup.body[0].base == null
+                && tree.sup.body[0].sup.type === "ordgroup"
+                && tree.sup.body[0].sup.body.length != 0
+                && tree.sup.body[0].sup.body.every(element => element.text === '\\prime')) {
+                sup_typ = "' ".repeat(tree.sup.body[0].sup.body.length).trim();
 
                 return `${base_typ}${sup_typ}${sub_typ}`;
             }
@@ -306,7 +318,7 @@ build_functions.spacing = function (tree, in_function, in_str = false) {
         return " "
     }
     if ("text" in tree) {
-        if (["\\ ", " "].includes(tree.text)) {
+        if (["\\ ", " ", "\\nobreakspace"].includes(tree.text)) {
             return "space"
         }
     }
@@ -757,6 +769,6 @@ export function build_expression(tree, in_function) {
     } else {
         // null
         console.warn(`Warning: null tree!`)
-        return "zwj";
+        return "zws";
     }
 }
