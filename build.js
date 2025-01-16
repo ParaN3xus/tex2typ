@@ -621,7 +621,7 @@ function build_typst_autolr(left, right, body) {
     const pairs = [
         { lefts: ['(', '[', '{'], rights: [')', ']', '}'], format: (body, l, r) => `${l} ${body} ${r}`, in_function: false },
         { lefts: ['\\lbrack'], rights: ['\\rbrack'], format: (body) => `[ ${body} ]`, in_function: false },
-        { lefts: ['|', '\\vert'], rights: ['|', '\\vert'], format: (body) => `abs( ${body} )`, in_function: true },
+        { lefts: ['|', '\\vert', '\\lvert'], rights: ['|', '\\vert', '\\rvert'], format: (body) => `abs( ${body} )`, in_function: true },
         { lefts: ['\\|', '\\Vert'], rights: ['\\|', '\\Vert'], format: (body) => `norm( ${body} )`, in_function: true },
         { lefts: ['\\lfloor'], rights: ['\\rfloor'], format: (body) => `floor( ${body} )`, in_function: true },
         { lefts: ['\\lceil'], rights: ['\\rceil'], format: (body) => `ceil( ${body} )`, in_function: true },
