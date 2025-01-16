@@ -523,7 +523,7 @@ export const openMapping = {
 }
 
 export const innerMapping = {
-    "\\@cdots": "dots.h.c",
+    "\\@cdots": "dots.c",
     "\\ldots": "...",
     "\\ddots": "dots.down",
     "\\mathellipsis": "...",
