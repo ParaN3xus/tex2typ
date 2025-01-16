@@ -278,13 +278,17 @@ build_functions.kern = function (tree, in_function) {
     var number = tree.dimension.number
     switch (unit) {
         case "em":
-            switch (number) {
-                case 1:
+            switch (true) {
+                case (number < 0.25):
+                    return "thin";
+                case (number < 0.5):
+                    return "space";
+                case (number < 1.5):
                     return "quad";
-                case 2:
+                case (number < 2.5):
                     return "wide";
                 default:
-                    return `#v( ${number}em )`;
+                    return "wide";
             }
         default:
             ;
