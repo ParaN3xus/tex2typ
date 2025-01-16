@@ -283,10 +283,17 @@ build_functions.kern = function (tree, in_function) {
     }
 }
 
-build_functions.spacing = function (tree, in_function) {
+build_functions.spacing = function (tree, in_function, in_str = false) {
     // TODO: many spaces
-    return "";
-    //return "space.nobreak";
+    if (in_str) {
+        return " "
+    }
+    if ("text" in tree) {
+        if (tree.text == "\\ ") {
+            return "space"
+        }
+    }
+    throw new Error("Unknown space!");
 }
 
 
@@ -369,12 +376,24 @@ build_functions.font = function (tree, in_function) {
     }
 
     if (fontCommand === "upright") {
-        const allMathord = tree.body.type === "ordgroup" && tree.body.body.every(element => element.type === 'mathord');
+        const allOrd =
+            tree.body.type === "ordgroup" &&
+            tree.body.body.every(
+                element => ['mathord', 'textord', 'spacing', 'atom'].includes(element.type)
+            );
 
-        if (allMathord) {
-            const allLiteral = tree.body.body.every(element => !element.text.startsWith("\\"));
+        if (allOrd) {
+            const allLiteral = tree.body.body.every(element => !element.text.startsWith("\\") || element.type == "spacing");
             if (allLiteral) {
-                const mergedText = tree.body.body.map(element => element.text).join('');
+                const mergedText = tree.body.body.map(element => {
+                    const text = element.text
+                    if (element.type == "spacing") {
+                        return " "
+                    } else {
+                        return text
+                    }
+                }).join('');
+
                 if (mergedText.length > 1) {
                     return `"${mergedText}"`;
                 }
@@ -384,7 +403,9 @@ build_functions.font = function (tree, in_function) {
                 }
             }
 
-            const mergedText = tree.body.body.map(element => element.text).join(' ');
+            const mergedText = tree.body.body.map(element => {
+                build_expression(element)
+            }).join(' ');
             return build_typst_function("upright", mergedText);
         } else if (tree.body.text === "d") {
             return "dif";
