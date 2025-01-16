@@ -75,6 +75,9 @@ build_functions.text = function (tree, in_function) {
 }
 
 build_functions.supsub = function (tree, in_function) {
+    if (tree.base.type == "horizBrace") {
+        return build_functions.horizBrace(tree.base, in_function, tree.sup ? tree.sup : tree.sub)
+    }
     var base_typ = build_expression(tree.base, false);
     if (base_typ == undefined || base_typ.trim() === "") {
         base_typ = "zws";
@@ -503,13 +506,17 @@ build_functions.htmlmathml = function (tree, in_function) {
     return build_expression(tree.html, in_function);
 }
 
-build_functions.horizBrace = function (tree, in_function) {
+build_functions.horizBrace = function (tree, in_function, supsub = null) {
     let body_typ = build_expression(tree.base, true);
+    let args = body_typ
+    if (supsub) {
+        args = [body_typ, build_expression(supsub, true)]
+    }
     switch (tree.label) {
         case "\\underbrace":
-            return build_typst_function("underbrace", body_typ);
+            return build_typst_function("underbrace", args);
         case "\\overbrace":
-            return build_typst_function("overbrace", body_typ);
+            return build_typst_function("overbrace", args);
         default:
             console.warn(`Warning: The horizBrace label "${tree.label}" is not recognized.`);
             return "";
