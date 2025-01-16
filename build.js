@@ -98,7 +98,7 @@ build_functions.supsub = function (tree, in_function) {
         if (tree.sup.type === "ordgroup") {
             const allPrime = tree.sup.body.length != 0 && tree.sup.body.every(element => element.text === '\\prime');
             if (allPrime) {
-                sup_typ = "' ".repeat(tree.sup.body.length).trim();
+                sup_typ = "'".repeat(tree.sup.body.length).trim();
 
                 return `${base_typ}${sup_typ}${sub_typ}`;
             }
@@ -110,7 +110,7 @@ build_functions.supsub = function (tree, in_function) {
                 && tree.sup.body[0].sup.type === "ordgroup"
                 && tree.sup.body[0].sup.body.length != 0
                 && tree.sup.body[0].sup.body.every(element => element.text === '\\prime')) {
-                sup_typ = "' ".repeat(tree.sup.body[0].sup.body.length).trim();
+                sup_typ = "'".repeat(tree.sup.body[0].sup.body.length).trim();
 
                 return `${base_typ}${sup_typ}${sub_typ}`;
             }
