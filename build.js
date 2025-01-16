@@ -1,5 +1,5 @@
 import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
-import { decodeLatexEscape, encodeTypstFunctionEscape } from "./escape.js"
+import { decodeLatexEscape, encodeTypstFunctionEscape, encodeTypstEscape } from "./escape.js"
 
 var build_functions = {}
 
@@ -218,12 +218,12 @@ build_functions.leftright = function (tree, in_function) {
     if (left === "." && right != ".") {
         let mid = right_typ;
         var body_typ = build_expression(tree.body, true);
-        return `${build_typst_function("mid", mid)} ${body_typ}`;
+        return `${body_typ} ${build_typst_function("mid", encodeTypstEscape(mid))} `;
 
     } else if (left != "." && right === ".") {
         let mid = left_typ;
         var body_typ = build_expression(tree.body, true);
-        return `${body_typ} ${build_typst_function("mid", mid)}`;
+        return `${build_typst_function("mid", encodeTypstEscape(mid))} ${body_typ}`;
     }
 
     // auto lr
@@ -508,6 +508,10 @@ build_functions.hbox = function (tree, in_function) {
     return build_expression(tree.body, in_function);
 }
 
+build_functions.vphantom = function (tree, in_function) {
+    return "zws";
+}
+
 function build_typst_function(functionName, args) {
     let argsStrArray = [];
 
@@ -647,6 +651,10 @@ function build_typst_upright_or_str(tree) {
                 }
             }).join('');
 
+            if (operators.includes(mergedText)) {
+                return mergedText;
+            }
+
             if (mergedText.length > 1) {
                 return `"${mergedText}"`;
             }
@@ -739,7 +747,7 @@ function build_array(tree, in_function) {
 
 export function build_expression(tree, in_function) {
     if (Array.isArray(tree)) {
-        return build_array(tree);
+        return build_array(tree, in_function);
     } else if (typeof tree === 'object' && tree !== null) {
         if (tree.type in build_functions) {
             return build_functions[tree.type](tree, in_function);
