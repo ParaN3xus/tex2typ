@@ -44,6 +44,14 @@ build_functions.ordgroup = function (tree, in_function) {
     return build_expression(tree.body, in_function);
 }
 
+build_functions.mathchoice = function (tree, in_function) {
+    return "";
+}
+
+build_functions.lap = function (tree, in_function) {
+    return build_expression(tree.body, in_function);
+}
+
 build_functions.text = function (tree, in_function) {
     if ("font" in tree) {
         if (tree.font == "\\textrm") {
@@ -75,12 +83,16 @@ build_functions.text = function (tree, in_function) {
 }
 
 build_functions.supsub = function (tree, in_function) {
-    if (tree.base.type == "horizBrace") {
+    if (tree.base && tree.base.type == "horizBrace") {
         return build_functions.horizBrace(tree.base, in_function, tree.sup ? tree.sup : tree.sub)
     }
-    var base_typ = build_expression(tree.base, false);
+    var base_typ = tree.base ? build_expression(tree.base, false) : null;
     if (base_typ == undefined || base_typ.trim() === "") {
         base_typ = "zws";
+    }
+
+    if (base_typ === "(") {
+        base_typ = "( zws"
     }
 
     var sub_typ = "", sup_typ = "";
@@ -321,12 +333,12 @@ build_functions.spacing = function (tree, in_function, in_str = false) {
         return " "
     }
     if ("text" in tree) {
-        if (["\\ ", " ", "\\nobreakspace"].includes(tree.text)) {
+        if (["\\ ", " ", "\\nobreakspace", "\\nobreak", "\\allowbreak", "\\space"]
+            .includes(tree.text)) {
             return "space"
         }
     }
-    return ""
-    // throw new Error("Unknown space!");
+    throw new Error("Unknown space!");
 }
 
 
@@ -500,6 +512,8 @@ build_functions.htmlmathml = function (tree, in_function) {
                 return "!=";
             case "∉":
                 return "in.not";
+            case "⌟":
+                return "⌟";
             default:
                 ;
         }
@@ -530,6 +544,22 @@ build_functions.hbox = function (tree, in_function) {
 
 build_functions.vphantom = function (tree, in_function) {
     return "zws";
+}
+
+build_functions.hphantom = function (tree, in_function) {
+    return "";
+}
+
+build_functions.pmb = function (tree, in_function) {
+    return build_typst_function("bold", build_expression(tree.body, true));
+}
+
+build_functions.enclose = function (tree, in_function) {
+    return build_expression(tree.body, false);
+}
+
+build_functions.smash = function (tree, in_function) {
+    return build_expression(tree.body, false);
 }
 
 function build_typst_function(functionName, args) {
@@ -756,6 +786,25 @@ function build_array(tree, in_function) {
                 // not found
                 result.push(build_expression(tree[i], in_function));
             }
+        } else if (tree[i].type === 'htmlmathml') {
+            // rlap
+            if ("body" in tree[i].html[0] && tree[i].html[0].body[0].type == "lap") {
+                if (tree[i].html[0].body[0].body.body[0].text === '\\@not') {
+                    if (tree[i + 1].type === 'atom') {
+                        switch (tree[i + 1].text) {
+                            case '\\in':
+                                result.push('in.not');
+                                break;
+                            case ('='):
+                                result.push('!=');
+                                break;
+                        }
+                        i++; // skip next
+                        continue
+                    }
+                }
+            }
+            result.push(build_expression(tree[i], in_function));
         } else {
             result.push(build_expression(tree[i], in_function));
         }
