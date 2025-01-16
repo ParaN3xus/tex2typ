@@ -325,7 +325,8 @@ build_functions.spacing = function (tree, in_function, in_str = false) {
             return "space"
         }
     }
-    throw new Error("Unknown space!");
+    return ""
+    // throw new Error("Unknown space!");
 }
 
 
@@ -621,6 +622,7 @@ function build_typst_autolr(left, right, body) {
     const pairs = [
         { lefts: ['(', '[', '{'], rights: [')', ']', '}'], format: (body, l, r) => `${l} ${body} ${r}`, in_function: false },
         { lefts: ['\\lbrack'], rights: ['\\rbrack'], format: (body) => `[ ${body} ]`, in_function: false },
+        { lefts: ['\\{'], rights: ['\\}'], format: (body) => `{ ${body} }`, in_function: false },
         { lefts: ['|', '\\vert', '\\lvert'], rights: ['|', '\\vert', '\\rvert'], format: (body) => `abs( ${body} )`, in_function: true },
         { lefts: ['\\|', '\\Vert'], rights: ['\\|', '\\Vert'], format: (body) => `norm( ${body} )`, in_function: true },
         { lefts: ['\\lfloor'], rights: ['\\rfloor'], format: (body) => `floor( ${body} )`, in_function: true },
