@@ -9,7 +9,8 @@ export const fontMapping = {
     "mathtt": "mono",
     "mathbb": "bb",
     "mathcal": "cal",
-    "mathfrak": "frak"
+    "mathfrak": "frak",
+    "boldsymbol": "bold",
 };
 
 export const mathordMapping = {
@@ -90,7 +91,7 @@ export const textordMapping = {
     "\\o": "nothing",
     "\\O": "nothing",
     "\\complement": "complement",
-    "\\partial": "diff",
+    "\\partial": "partial",
     "\\nabla": "nabla",
     "\\forall": "forall",
     "\\exists": "exists",
