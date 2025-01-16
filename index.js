@@ -67,6 +67,7 @@ async function process_lst(filename) {
     const workspace = process.cwd();
     const filePath = path.resolve(workspace, filename);
     const baseFilename = path.basename(filename);
+    const failedFilePath = path.join(workspace, 'failed.txt');
     const failedLines = [];
 
     try {
