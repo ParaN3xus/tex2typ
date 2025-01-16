@@ -48,7 +48,6 @@ function convert(expression) {
 
     return typ_expression;
 
-
     /* post process
     for (var i = 0; i < 300; ++i) {
         norm_str = norm_str.replace('SSSSSS', '$');
@@ -68,49 +67,50 @@ async function process_lst(filename) {
     const workspace = process.cwd();
     const filePath = path.resolve(workspace, filename);
     const baseFilename = path.basename(filename);
+    const failedLines = [];
 
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading file:', err);
-            return;
-        }
-
+    try {
+        const data = await fs.promises.readFile(filePath, 'utf8');
         const lines = data.split('\n');
-        var index = 0;
-
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
 
         if (filename === 'test.txt') {
-            rl.on('line', () => {
-                if (index < lines.length) {
-                    var latexString = lines[index];
-                    console.log(`formula [${index}]:`, latexString);
-                    console.log(convert(latexString));
-
-                    index++;
-                    if (index === lines.length) {
-                        rl.close();
-                    }
-                }
+            const rl = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
             });
+
+            for (let index = 0; index < lines.length; index++) {
+                const latexString = lines[index];
+                console.log(`formula [${index}]:`, latexString);
+                console.log(convert(latexString));
+                await new Promise(resolve => rl.once('line', resolve));
+            }
+            rl.close();
         } else {
             const convertedFilePath = path.join(path.dirname(filePath), `converted_${baseFilename}`);
             const writeStream = fs.createWriteStream(convertedFilePath, { flags: 'w' });
 
-            lines.forEach((latexString, index) => {
+            for (let index = 0; index < lines.length; index++) {
                 try {
-                    writeStream.write(`${convert(latexString)}\n`);
+                    writeStream.write(`${convert(lines[index])}\n`);
                 } catch (convertErr) {
                     console.log(`Error converting formula [${index}]: ${convertErr}\n`);
+                    failedLines.push(lines[index]);
                 }
-            });
+            }
             writeStream.end();
         }
-    });
+
+        console.log(failedLines.length)
+        if (failedLines.length > 0) {
+            await fs.promises.writeFile(failedFilePath, failedLines.join('\n'), 'utf8');
+            console.log('Successfully wrote failed lines to file:', failedFilePath);
+        }
+    } catch (err) {
+        console.error('Error processing file:', err);
+    }
 }
+
 
 async function process_csv(csv_name) {
     const workspace = process.cwd();
