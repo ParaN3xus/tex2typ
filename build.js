@@ -376,9 +376,9 @@ build_functions.operatorname = function (tree, in_function) {
             }
         }
     }
-    const mergedOp = build_expression(tree.body, true);
+    const mergedOp = build_typst_upright_or_str(tree);
 
-    return build_typst_function("op", build_typst_function("upright", mergedOp));
+    return build_typst_function("op", mergedOp);
 }
 
 
@@ -684,7 +684,7 @@ function build_typst_upright_or_str(tree) {
         }
 
         const mergedText = body.map(element => {
-            build_expression(element)
+            return build_expression(element, true)
         }).join(' ');
         return build_typst_function("upright", mergedText);
     } else if ("text" in tree.body && tree.body.text === "d") {
