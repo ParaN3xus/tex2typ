@@ -3,12 +3,13 @@ export const fontMapping = {
     "mathrm": "upright",
     "mbox": "upright",
     "hbox": "upright",
-    //"mathbf": "mitexmathbf",
     "mathit": "italic",
     "mathsf": "sans",
     "mathtt": "mono",
     "mathbb": "bb",
     "mathcal": "cal",
+    // there's no independent impl for mathscr in typst currently
+    "mathscr": "cal",
     "mathfrak": "frak",
     "boldsymbol": "bold",
 };
