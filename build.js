@@ -218,12 +218,12 @@ build_functions.leftright = function (tree, in_function) {
     if (left === "." && right != ".") {
         let mid = right_typ;
         var body_typ = build_expression(tree.body, true);
-        return `${build_expression("mid", mid)} ${body_typ}`;
+        return `${build_typst_function("mid", mid)} ${body_typ}`;
 
     } else if (left != "." && right === ".") {
         let mid = left_typ;
         var body_typ = build_expression(tree.body, true);
-        return `${body_typ} ${build_expression("mid", mid)}`;
+        return `${body_typ} ${build_typst_function("mid", mid)}`;
     }
 
     // auto lr
@@ -236,6 +236,10 @@ build_functions.leftright = function (tree, in_function) {
     var body_typ = build_expression(tree.body, false);
     return build_typst_function("lr", `${left_typ} ${body_typ} ${right_typ}`);
 
+}
+
+build_functions.middle = function (tree, in_function) {
+    return build_typst_function("mid", build_functions.delimsizing(tree))
 }
 
 build_functions.accent = function (tree, in_function) {
