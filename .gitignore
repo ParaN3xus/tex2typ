@@ -3,3 +3,6 @@ yarn.lock
 
 temp/*
 test.txt
+
+.vscode
+dist
