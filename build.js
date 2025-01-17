@@ -1,5 +1,6 @@
-import { xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
+import { negationMap, xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstFunctionEscape, encodeTypstEscape } from "./escape.js"
+import { isDigitOrDot, getSingleBody, getMatchingBracket } from "./utils.js"
 
 var build_functions = {}
 
@@ -8,7 +9,7 @@ build_functions.atom = function (tree, in_function) {
     if (tree.text in atomMapping) {
         res = atomMapping[tree.text];
     } else {
-        // console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
+        console.warn(`Warning: The atom "${tree.text}" is not recognized.`);
         res = tree.text;
     }
     return in_function ? encodeTypstFunctionEscape(res) : res
@@ -119,6 +120,7 @@ build_functions.supsub = function (tree, in_function) {
             if (tree.sup.body.length == 1
                 && tree.sup.body[0].type == "supsub"
                 && tree.sup.body[0].base == null
+                && tree.sup.body[0].sup
                 && tree.sup.body[0].sup.type === "ordgroup"
                 && tree.sup.body[0].sup.body.length != 0
                 && tree.sup.body[0].sup.body.every(element => element.text === '\\prime')) {
@@ -286,14 +288,40 @@ build_functions.accent = function (tree, in_function) {
         switch (label) {
             case "\\bcancel":
                 res = `cancel( inverted: #true , ${base_typ} )`;
+                break;
             case "\\sout":
                 res = `cancel( angle: #90deg , ${base_typ} )`;
+                break;
             case "\\boxed":
                 res = `#box( stroke: 0.5pt , inset: 6pt , $${base_typ}$ )`;
+                break;
             case "\\overgroup":
                 res = `accent( ${base_typ} , \u{0311} )`;
+                break;
             case "\\overlinesegment":
                 res = `accent( ${base_typ} , \u{20e9} )`;
+                break;
+            case "\\c":
+                res = `${base_typ}\\u{0327}`;
+                break;
+            case "\\textcircled":
+                let body = getSingleBody(tree.base)
+                if (body.type == "atom") {
+                    switch (body.text) {
+                        case "<":
+                            return "lt.circle"
+                        case ">":
+                            return "gt.circle"
+                        case "=":
+                            return "eq.circle"
+                        case "+":
+                            return "plus.circle"
+                        default:
+                            console.warn("Warning: unrecognized textcircled text")
+                            return ""
+                    }
+                }
+                break;
             default:
                 console.warn(`Warning: The accent "${label}" is not recognized.`);
                 base_typ = build_expression(tree.base, in_function);
@@ -307,6 +335,15 @@ build_functions.accent = function (tree, in_function) {
 build_functions.kern = function (tree, in_function) {
     var unit = tree.dimension.unit;
     var number = tree.dimension.number
+
+    // preprocess
+    switch (unit) {
+        case "mu":
+            unit = "em";
+            number = number / 18.0;
+        default:
+    }
+
     switch (unit) {
         case "em":
             switch (true) {
@@ -322,8 +359,8 @@ build_functions.kern = function (tree, in_function) {
                     return "wide";
             }
         default:
-            ;
-        //console.warn(`Warning: The unit "${unit}" is not recognized.`);
+            return "";
+            console.warn(`Warning: The unit "${unit}" is not recognized.`);
     }
 }
 
@@ -415,7 +452,8 @@ build_functions.font = function (tree, in_function) {
             }
         }
         return build_typst_function("bold", build_typst_function("upright", build_expression(tree.body, true)));
-    } else {
+    }
+    else {
         console.warn(`Warning: The font "${font}" is not recognized.`);
         fontCommand = font;
     }
@@ -505,17 +543,31 @@ build_functions.mclass = function (tree, in_function) {
 }
 
 build_functions.htmlmathml = function (tree, in_function) {
-    if (Array.isArray(tree.mathml) && Array.isArray(tree.mathml[0].body) && "text" in tree.mathml[0].body[0]) {
-        const text = tree.mathml[0].body[0].text;
+    const body = getSingleBody(tree.mathml)
+    if (body) {
+        const text = body.text;
+
+        if (["⌟", "⌞", "⌜", "⌝"].includes(text)) {
+            return text;
+        }
+
         switch (text) {
             case "≠":
                 return "!=";
             case "∉":
                 return "in.not";
-            case "⌟":
-                return "⌟";
+            case "ȷ":
+                return "dotless.j";
+            case "ı":
+                return "dotless.i";
+            case "©":
+                return "copyright"
+            case "®":
+                return "trademark.registered"
+            case "̸":
+                break
             default:
-                ;
+                console.warn("Warning: unknown text of htmlmathml detected");
         }
     }
     return build_expression(tree.html, in_function);
@@ -560,6 +612,10 @@ build_functions.enclose = function (tree, in_function) {
 
 build_functions.smash = function (tree, in_function) {
     return build_expression(tree.body, false);
+}
+
+build_functions.verb = function (tree, in_function) {
+    return `${tree.body}`;
 }
 
 function build_typst_function(functionName, args) {
@@ -724,18 +780,6 @@ function build_typst_upright_or_str(tree) {
     }
 }
 
-function isDigitOrDot(char) {
-    return char === '.' || (char >= '0' && char <= '9');
-}
-
-function getMatchingBracket(openBracket) {
-    const bracketPairs = {
-        '(': ')',
-        '[': ']',
-        '{': '}'
-    };
-    return bracketPairs[openBracket] || '';
-}
 
 function build_array(tree, in_function) {
     let result = [];
@@ -790,15 +834,14 @@ function build_array(tree, in_function) {
             // rlap
             if ("body" in tree[i].html[0] && tree[i].html[0].body[0].type == "lap") {
                 if (tree[i].html[0].body[0].body.body[0].text === '\\@not') {
-                    if (tree[i + 1].type === 'atom') {
-                        switch (tree[i + 1].text) {
-                            case '\\in':
-                                result.push('in.not');
-                                break;
-                            case ('='):
-                                result.push('!=');
-                                break;
+                    if (i + 1 < tree.length && tree[i + 1].type === 'atom') {
+                        const negatedSymbol = negationMap[tree[i + 1].text];
+                        if (negatedSymbol) {
+                            result.push(negatedSymbol);
+                        } else {
+                            console.warn("Warning: unknown negate")
                         }
+
                         i++; // skip next
                         continue
                     }
