@@ -11,6 +11,7 @@ export const fontMapping = {
     // there's no independent impl for mathscr in typst currently
     "mathscr": "cal",
     "mathfrak": "frak",
+    "mathnormal": "",
     "boldsymbol": "bold",
 };
 
@@ -177,6 +178,18 @@ export const textordMapping = {
 }
 
 export const relMapping = {
+    "=": "=",
+    ">": ">",
+    "<": "<",
+    "≤": "<=",
+    ":": ":",
+    "↦": "|->",
+    "≅": "tilde.equiv",
+    "∈": "in",
+
+    // fallback
+    "\\@not": "",
+
     "\\in": "in",
     "\\subset": "subset",
     "\\subseteq": "subset.eq",
@@ -417,6 +430,15 @@ export const relMapping = {
 }
 
 export const binMapping = {
+    "+": "+",
+    "-": "-",
+    "±": "plus.minus",
+    "−": "-",
+    "×": "times",
+    "*": "*",
+    "⊗": "times.circle",
+    "⊘": "emptyset",
+    "∘": "compose",
     "\\cdot": "dot.c",
     "\\times": "times",
     "\\oplus": "plus.circle",
@@ -486,6 +508,10 @@ export const binMapping = {
 }
 
 export const closeMapping = {
+    ")": ")",
+    "]": "]",
+    "!": "!",
+    "?": "?",
     "\\}": "}",
     "\\rvert": "|",
     "\\rVert": "||",
@@ -495,6 +521,7 @@ export const closeMapping = {
     "\\rbrack": "]",
     "\\rgroup": "⟯",
     "\\rangle": "angle.r",
+    "⟩": "angle.r",
     "\\rbrace": "}",
     "\\lrcorner": "⌟",
     "\\@lrcorner": "⌟",
@@ -505,6 +532,8 @@ export const closeMapping = {
 
 
 export const openMapping = {
+    "(": "(",
+    "[": "[",
     "\\{": "{",
     "\\lvert": "|",
     "\\lVert": "||",
@@ -514,6 +543,7 @@ export const openMapping = {
     "\\lbrack": "[",
     "\\lgroup": "⟮",
     "\\langle": "angle.l",
+    "⟨": "angle.l",
     "\\lbrace": "{",
     "\\llcorner": "⌞",
     "\\@llcorner": "⌞",
@@ -527,10 +557,13 @@ export const innerMapping = {
     "\\ldots": "...",
     "\\ddots": "dots.down",
     "\\mathellipsis": "...",
-    "\\textellipsis": "..."
+    "\\textellipsis": "...",
+    "…": "...",
 }
 
 export const punctMapping = {
+    ",": ",",
+    ";": ";",
     "\\cdotp": "dot.c",
     "\\ldotp": "."
 }
@@ -560,6 +593,9 @@ export const accentMapping = {
     "\\acute": "acute",
     "\\hat": "hat",
     "\\widehat": "hat",
+    "\\^": "hat",
+    "\\.": "dot",
+    "\\\"": "dot.double",
     "\\tilde": "tilde",
     "\\widetilde": "tilde",
     "\\bar": "overline",
@@ -569,6 +605,7 @@ export const accentMapping = {
     "\\dddot": "dot.triple",
     "\\ddddot": "dot.quad",
     "\\H": "acute.double",
+    "\\'": "acute",
     "\\check": "caron",
     "\\widecheck": "caron",
     "\\u": "breve",
@@ -637,6 +674,19 @@ export const opMapping = {
     "\\oint": "integral.cont",
     "\\oiint": "integral.surf",
     "\\oiiint": "integral.vol",
+    "\\bigsqcup": "union.sq.big",
+    "\\bigvee": "or.big",
+    "\\bigwedge": "and.big",
+    "\\smallint": "integral",
+    "\\bigcup": "union.big",
+    "\\bigoplus": "plus.big.circle",
+    "\\bigotimes": "times.big.circle",
+    "\\coprod": "product.co",
+    "\\bigcap": "sect.big",
+    "\\bigodot": "dot.big.circle",
+    "\\intop": "limits( integral )",
+    "\\biguplus": "union.big.plus",
+    "\\th": "op( \"th\" )",
 }
 
 export const xArrowMapping = {
@@ -659,4 +709,36 @@ export const xArrowMapping = {
     "\\xtofrom": "arrows.rl",
     "\\xmapsto": "|->",
     "\\xlongequal": "=",
-} 
+}
+
+export const negationMap = {
+    '\\in': 'in.not',
+    '=': '!=',
+    '\\equiv': 'equiv.not',
+    '\\mid': 'divides.not',
+    '\\approx': 'approx.not',
+    '\\Rightarrow': 'arrow.double.not',
+    '\\Leftarrow': 'arrow.l.double.not',
+    '\\rightarrow': 'arrow.not',
+    '\\leftarrow': 'arrow.l.not',
+    '\\to': 'arrow.not',
+    '\\leftrightarrow': 'arrow.l.r.not',
+    '\\subset': 'subset.not',
+    '\\subseteq': 'subset.eq.not',
+    '\\sqsubseteq': 'subset.sq.eq.not',
+    '\\supset': 'supset.not',
+    '\\vdash': 'tack.not',
+    '\\parallel': 'parallel.not',
+    '\\cong': "tilde.equiv.not",
+    "\\simeq": "tilde.eq.not",
+    "\\leq": "lt.eq.not",
+    "\\prec": "prec.not",
+    "\\sim": "tilde.not",
+    "\\ni": "in.rev.not",
+
+    // there is no "not" in typst, but to clear warnings...
+    "\\perp": "perp",
+    "\\gg": "gt.double",
+    "\\ll": "lt.double",
+    "\\propto": "prop",
+};
