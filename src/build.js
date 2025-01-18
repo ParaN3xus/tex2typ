@@ -55,7 +55,7 @@ build_functions.lap = function (tree, in_function, msg) {
 
 build_functions.text = function (tree, in_function, msg) {
     if ("font" in tree) {
-        if (tree.font == "\\textrm") {
+        if (tree.font === "\\textrm") {
             const res = build_typst_upright_or_str(tree)
             if (res != null) {
                 return res;
@@ -84,7 +84,7 @@ build_functions.text = function (tree, in_function, msg) {
 }
 
 build_functions.supsub = function (tree, in_function, msg) {
-    if (tree.base && tree.base.type == "horizBrace") {
+    if (tree.base && tree.base.type === "horizBrace") {
         return build_functions.horizBrace(tree.base, in_function, tree.sup ? tree.sup : tree.sub)
     }
     var base_typ = tree.base ? build_expression(tree.base, false, msg) : null;
@@ -118,7 +118,7 @@ build_functions.supsub = function (tree, in_function, msg) {
 
             // originally ^ zwj'
             if (tree.sup.body.length == 1
-                && tree.sup.body[0].type == "supsub"
+                && tree.sup.body[0].type === "supsub"
                 && tree.sup.body[0].base == null
                 && tree.sup.body[0].sup
                 && tree.sup.body[0].sup.type === "ordgroup"
@@ -164,7 +164,7 @@ build_functions.sqrt = function (tree, in_function, msg) {
 build_functions.array = function (tree, in_function, msg) {
     if (tree.type === "array" &&
         tree.from === "matrix") {
-        throw Error("Using matrix as align");
+        msg.err("Using matrix as align.");
         // this is because all common matrixes with delims are processed in build_functions.lr
         // things here are thost matrixes without delims, but most of them are intended to be
         // align.
@@ -213,6 +213,11 @@ build_functions.leftright = function (tree, in_function, msg) {
             return build_typst_cases(tree.body[0], `"${right_typ}"`, true, msg);
         } else if (right === "." && left != ".") {
             return build_typst_cases(tree.body[0], `"${left_typ}"`, false, msg);
+        }
+
+        // align
+        if (left === "." && right === ".") {
+            return build_functions.array(tree.body[0], in_function, msg)
         }
 
         // vec or mat
@@ -306,7 +311,7 @@ build_functions.accent = function (tree, in_function, msg) {
                 break;
             case "\\textcircled":
                 let body = getSingleBody(tree.base)
-                if (body.type == "atom") {
+                if (body.type === "atom") {
                     switch (body.text) {
                         case "<":
                             return "lt.circle"
@@ -748,11 +753,11 @@ function build_typst_upright_or_str(tree, msg) {
     }
 
     if (allOrd) {
-        const allLiteral = body.every(element => !element.text.startsWith("\\") || element.type == "spacing");
+        const allLiteral = body.every(element => !element.text.startsWith("\\") || element.type === "spacing");
         if (allLiteral) {
             const mergedText = body.map(element => {
                 const text = element.text
-                if (element.type == "spacing") {
+                if (element.type === "spacing") {
                     return " "
                 } else {
                     return text
@@ -833,7 +838,7 @@ function build_array(tree, in_function, msg) {
             }
         } else if (tree[i].type === 'htmlmathml') {
             // rlap
-            if ("body" in tree[i].html[0] && tree[i].html[0].body[0].type == "lap") {
+            if ("body" in tree[i].html[0] && tree[i].html[0].body[0].type === "lap") {
                 if (tree[i].html[0].body[0].body.body[0].text === '\\@not') {
                     if (i + 1 < tree.length && tree[i + 1].type === 'atom') {
                         const negatedSymbol = negationMap[tree[i + 1].text];
