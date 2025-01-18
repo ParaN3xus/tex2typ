@@ -41,6 +41,23 @@ const convert = (text) => {
   }
 };
 
+function parseDiagnostics(str) {
+  const diagRegex = /SourceDiagnostic\s*{\s*severity:\s*(\w+),.*?message:\s*"([^"]+)"/g;
+  const results = [];
+
+  let match;
+  while ((match = diagRegex.exec(str)) !== null) {
+    console.log(match)
+    results.push({
+      severity: match[1],
+      message: match[2]
+    });
+  }
+
+  return results;
+}
+
+
 const compile = (mainContent) => {
   if (!isTypstInitialized.value) {
     return;
@@ -53,6 +70,31 @@ const compile = (mainContent) => {
   }).then(svg => {
     console.log(`rendered! SvgElement { len: ${svg.length} }`);
     renderedSvg.value = svg;
+  }).catch(err => {
+    const diagnostics = parseDiagnostics(err)
+    for (let diag of diagnostics) {
+      let diagMsg = {
+        type: 'error',
+        msg: ''
+      };
+
+      switch (diag.severity.toLowerCase()) {
+        case 'info':
+          diagMsg.type = 'info';
+          break;
+        case 'warning':
+          diagMsg.type = 'warn';
+          break;
+        case 'error':
+          diagMsg.type = 'error';
+          break;
+        default:
+          diagMsg.type = 'error';
+      }
+
+      diagMsg.msg = diag.message;
+      messages.value.push(diagMsg);
+    }
   });
 };
 
