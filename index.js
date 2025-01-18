@@ -3,7 +3,7 @@ import path from 'path';
 import readline from 'readline';
 import { parse } from 'csv-parse';
 import { stringify } from 'csv-stringify';
-import convert from "./lib.js"
+import convert from "./src/lib.js"
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -31,7 +31,7 @@ async function process_lst(filename) {
             for (let index = 0; index < lines.length; index++) {
                 const latexString = lines[index];
                 console.log(`formula [${index}]:`, latexString);
-                console.log(convert(latexString));
+                console.log(convert(latexString).expr);
                 await new Promise(resolve => rl.once('line', resolve));
             }
             rl.close();
@@ -41,7 +41,7 @@ async function process_lst(filename) {
 
             for (let index = 0; index < lines.length; index++) {
                 try {
-                    writeStream.write(`${convert(lines[index])}\n`);
+                    writeStream.write(`${convert(lines[index]).expr}\n`);
                 } catch (convertErr) {
                     console.log(`Error converting formula [${index}]: ${convertErr}\n`);
                     failedLines.push(lines[index]);
@@ -82,7 +82,7 @@ async function process_csv(csv_name) {
         let formula = row.latex;
 
         try {
-            formula = convert(formula);
+            formula = convert(formula).expr;
             outputData.push({ name, formula });
         } catch (err) {
             console.error(`Failed to process formula for ${name}:`, err);

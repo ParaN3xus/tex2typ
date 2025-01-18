@@ -1,5 +1,6 @@
 import katex from 'katex';
 import { build_expression } from './build.js';
+import { newMessage } from './utils.js';
 
 // https://github.com/harvardnlp/im2markup/blob/master/scripts/preprocessing/preprocess_latex.js
 function preprocess(exp) {
@@ -31,16 +32,18 @@ function preprocess(exp) {
     return exp;
 }
 
-export function convert(expression) {
+export default function convert(expression) {
+    var msg = newMessage()
+
     try {
         var tree = katex.__parse(preprocess(expression), { displayMode: true });
     } catch (e) {
-        console.warn(`Warning: Failed to parse: ${e}, skipping.`);
-        return "";
+        msg.err(`Failed to parse: ${e}`);
+        return { "expr": "", "msg": msg.getAll() };
     }
-    var typ_expression = build_expression(tree);
+    var typ_expression = build_expression(tree, false, msg);
 
-    return typ_expression;
+    return { "expr": typ_expression, "msg": msg.getAll() };
 
     /* post process
     for (var i = 0; i < 300; ++i) {
