@@ -31,6 +31,7 @@ jobs:
         with:
           node-version: 22
       - run: |
+          corepack enable
           yarn build
           yarn run pack
           cp dist/tex2typ.js frontent/public
