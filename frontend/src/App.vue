@@ -88,6 +88,11 @@ watch(inputText, (newValue) => {
 }, { immediate: true });
 
 onMounted(async () => {
+  const script = document.createElement('script')
+  script.type = 'module'
+  script.src = 'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst.ts/dist/esm/contrib/all-in-one-lite.bundle.js'
+  script.id = 'typst'
+  document.head.appendChild(script)
   await initializeTypst();
 });
 </script>
