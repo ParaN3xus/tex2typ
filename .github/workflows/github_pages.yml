@@ -30,12 +30,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: |
+      - name: build tex2typ
+        run: |
           corepack enable
           yarn build
           yarn run pack
-          cp dist/tex2typ.js frontent/public
-      - run: |
+          cp dist/tex2typ.js frontend/public
+      - name: build frontend
+        run: |
           cd frontend
           yarn
           yarn build --base=/tex2typ 
