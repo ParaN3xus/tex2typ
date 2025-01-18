@@ -6,3 +6,5 @@ test.txt
 
 .vscode
 dist
+
+frontend/node_modules
