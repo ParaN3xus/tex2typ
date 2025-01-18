@@ -449,7 +449,7 @@ build_functions.font = function (tree, in_function, msg) {
             if (allLiteral) {
                 const mergedText = tree.body.body.map(element => element.text).join('');
                 if (mergedText.length > 1) {
-                    return build_typst_function("bold", mergedText);
+                    return build_typst_function("bold", `"${mergedText}"`);
                 }
             }
         }
