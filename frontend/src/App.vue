@@ -115,7 +115,7 @@ onMounted(async () => {
       <div class="flex-1">
         <div class="tooltip tooltip-bottom w-full" :data-tip="tooltipText" @click="copyToClipboard">
           <pre id="result-text"
-            class="h-64 p-4 w-full font-mono bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition whitespace-pre-wrap break-all">{{ convertedText }}</pre>
+            class="h-64 p-4 w-full font-mono bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition whitespace-pre-wrap break-all overflow-y-auto">{{ convertedText }}</pre>
         </div>
       </div>
     </div>
