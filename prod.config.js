@@ -1,13 +1,9 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 export default {
-    entry: './lib.js',
+    entry: './src/lib.js',
     output: {
-        filename: 'tex2typ.js',
+        filename: "tex2typ.js",
         library: 'tex2typ',
-        libraryTarget: 'window'
+        libraryTarget: 'umd'
     },
     mode: "development"
 };
