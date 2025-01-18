@@ -212,7 +212,7 @@ build_functions.leftright = function (tree, in_function, msg) {
         if (left === "." && right != ".") {
             return build_typst_cases(tree.body[0], `"${right_typ}"`, true, msg);
         } else if (right === "." && left != ".") {
-            return build_typst_cases(tree.body[0], `"${left_typ}"`, false), msg;
+            return build_typst_cases(tree.body[0], `"${left_typ}"`, false, msg);
         }
 
         // vec or mat
