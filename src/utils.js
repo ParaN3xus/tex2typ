@@ -74,3 +74,10 @@ export function newMessage() {
 
     return obj;
 }
+
+export function insertBetween(arr, elements) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        arr.splice(i, 0, ...elements);
+    }
+    return arr;
+}

@@ -1,10 +1,10 @@
 import { negationMap, xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstFunctionEscape, encodeTypstEscape } from "./escape.js";
-import { isDigitOrDot, getSingleBody, getMatchingBracket } from "./utils.js";
+import { isDigitOrDot, getSingleBody, getMatchingBracket, insertBetween } from "./utils.js";
 
 var build_functions = {};
 
-build_functions.atom = function (tree, in_function, msg) {
+build_functions.atom = function (tree, msg) {
     var res;
     if (tree.text in atomMapping) {
         res = atomMapping[tree.text];
@@ -12,48 +12,58 @@ build_functions.atom = function (tree, in_function, msg) {
         msg.warn(`The atom "${tree.text}" is not recognized.`);
         res = tree.text;
     }
-    return in_function ? encodeTypstFunctionEscape(res) : res;
+
+    return {
+        func: "text",
+        text: res
+    };
 };
 
-build_functions.mathord = function (tree, in_function, msg) {
+build_functions.mathord = function (tree, msg) {
     var tex = tree.text;
-    var typ;
+    var res;
 
     if (tex in mathordMapping) {
-        typ = mathordMapping[tex];
+        res = mathordMapping[tex];
     } else {
-        typ = tex;
+        res = tex;
     }
 
-    return in_function ? encodeTypstFunctionEscape(typ) : typ;
+    return {
+        func: "text",
+        text: res
+    };
 };
 
-build_functions.textord = function (tree, in_function, msg) {
+build_functions.textord = function (tree, msg) {
     var tex = tree.text;
-    var typ;
+    var res;
 
     if (tex in textordMapping) {
-        typ = textordMapping[tex];
+        res = textordMapping[tex];
     } else {
-        typ = tex;
+        res = tex;
     }
 
-    return in_function ? encodeTypstFunctionEscape(typ) : typ;
+    return {
+        func: "text",
+        text: res
+    };
 };
 
-build_functions.ordgroup = function (tree, in_function, msg) {
-    return build_expression(tree.body, in_function, msg);
+build_functions.ordgroup = function (tree, msg) {
+    return build_expression(tree.body)
 };
 
-build_functions.mathchoice = function (tree, in_function, msg) {
-    return "";
+build_functions.mathchoice = function (tree, msg) {
+    return null;
 };
 
-build_functions.lap = function (tree, in_function, msg) {
-    return build_expression(tree.body, in_function, msg);
+build_functions.lap = function (tree, msg) {
+    return build_expression(tree.body, msg);
 };
 
-build_functions.text = function (tree, in_function, msg) {
+build_functions.text = function (tree, msg) {
     if ("font" in tree) {
         if (tree.font === "\\textrm") {
             const res = build_typst_upright_or_str(tree);
@@ -71,39 +81,38 @@ build_functions.text = function (tree, in_function, msg) {
 
         if (allLiteral) {
             // TODO: not all texord but continuous occur
-            mergedText = tree.body.map(element => build_expression(element, false, msg)).join('');
+            mergedText = tree.body.map(element => build_expression(element, msg)).join('');
 
             if (mergedText.length > 1) {
                 return `"${mergedText}"`;
             }
         }
-        return build_typst_function("upright", build_expression(tree.body, true, msg));
+        return {
+            func: "styled",
+            styles: JSON.stringify({
+                styles: [
+                    {
+                        type: "property",
+                        italic: false,
+                    }
+                ]
+            }),
+            child: build_expression(tree.body)
+        };
     } else {
-        return tree.body.map(node => build_expression(node, in_function, msg)).join(' ');
+        return build_expression(tree.body);
     }
 };
 
-build_functions.supsub = function (tree, in_function, msg) {
+build_functions.supsub = function (tree, msg) {
     if (tree.base && tree.base.type === "horizBrace") {
-        return build_functions.horizBrace(tree.base, in_function, tree.sup ? tree.sup : tree.sub);
+        return build_functions.horizBrace(tree.base, tree.sup ? tree.sup : tree.sub);
     }
-    var base_typ = tree.base ? build_expression(tree.base, false, msg) : null;
-    if (base_typ == undefined || base_typ.trim() === "") {
-        base_typ = "zws";
-    }
+    var base_typ = tree.base ? build_expression(tree.base, msg) : null;
 
-    if (base_typ === "(") {
-        base_typ = "( zws";
-    }
-
-    var sub_typ = "", sup_typ = "";
-    var res;
+    var sub_typ = null, sup_typ = null;
     if (tree.sub) {
-        sub_typ = build_expression(tree.sub, false, msg);
-
-        if (sub_typ.trim() != "") {
-            sub_typ = ` _ ( ${sub_typ} )`;
-        }
+        sub_typ = build_expression(tree.sub, msg);
     }
 
     if (tree.sup) {
@@ -111,13 +120,12 @@ build_functions.supsub = function (tree, in_function, msg) {
         if (tree.sup.type === "ordgroup") {
             const allPrime = tree.sup.body.length != 0 && tree.sup.body.every(element => element.text === '\\prime');
             if (allPrime) {
-                sup_typ = "'".repeat(tree.sup.body.length).trim();
-
-                return `${base_typ}${sup_typ}${sub_typ}`;
-            }
-
-            // originally ^ zwj'
-            if (tree.sup.body.length == 1
+                sup_typ = {
+                    func: "primes",
+                    count: tree.sup.body.length
+                };
+            } else if (tree.sup.body.length == 1
+                // originally ^ zwj'
                 && tree.sup.body[0].type === "supsub"
                 && tree.sup.body[0].base == null
                 && tree.sup.body[0].sup
@@ -126,42 +134,71 @@ build_functions.supsub = function (tree, in_function, msg) {
                 && tree.sup.body[0].sup.body.every(element => element.text === '\\prime')) {
                 sup_typ = "'".repeat(tree.sup.body[0].sup.body.length).trim();
 
-                return `${base_typ}${sup_typ}${sub_typ}`;
+                sup_typ = {
+                    func: "primes",
+                    count: tree.sup.body.length
+                };
+            }
+
+            if (sup_typ) {
+                return {
+                    func: "attach",
+                    base: base_typ,
+                    tr: sup_typ,
+                    ...sub_typ && { b: sub_typ }
+                };
             }
         }
 
-        sup_typ = build_expression(tree.sup, false, msg);
+        sup_typ = build_expression(tree.sup, msg);
+    }
+    return {
+        func: "attach",
+        base: base_typ,
+        ...sup_typ && { t: sup_typ },
+        ...sub_typ && { b: sub_typ }
+    };
+};
 
-        if (1 || sup_typ.trim() != "") {
-            sup_typ = ` ^ ( ${sup_typ} )`;
+build_functions.genfrac = function (tree, msg) {
+    var numer = build_expression(tree.numer, msg);
+    var denom = build_expression(tree.denom, msg);
+    if (tree.hasBarLine) {
+        return {
+            func: "frac",
+            num: numer,
+            denom: denom
+        };
+    }
+    else {
+        return {
+            func: "binom",
+            upper: numer,
+            lower: denom
+        };
+    }
+};
+
+build_functions.sqrt = function (tree, msg) {
+    var body = build_expression(tree.body, msg);
+    if (tree.index) {
+        var index = build_expression(tree.index, msg);
+        return {
+            func: "root",
+            index: index,
+            radicand: body
         }
     }
-    return `${base_typ}${sub_typ}${sup_typ}`;
-};
-
-build_functions.genfrac = function (tree, in_function, msg) {
-    var numer = build_expression(tree.numer, false, msg);
-    var denom = build_expression(tree.denom, false, msg);
-    if (tree.hasBarLine) {
-        return `( ${numer} ) / ( ${denom} )`;
-    }
     else {
-        return `binom( ${numer} , ${denom} )`;
+        return {
+            func: "root",
+            radicand: body
+        }
     }
 };
 
-build_functions.sqrt = function (tree, in_function, msg) {
-    var body = build_expression(tree.body, true, msg);
-    if (tree.index) {
-        var index = build_expression(tree.index, true, msg);
-        return build_typst_function("root", [index, body]);
-    }
-    else {
-        return build_typst_function("sqrt", body);
-    }
-};
 
-build_functions.array = function (tree, in_function, msg) {
+build_functions.array = function (tree, msg) {
     if (tree.type === "array" &&
         tree.from === "matrix") {
         msg.err("Using matrix as align.");
@@ -171,53 +208,46 @@ build_functions.array = function (tree, in_function, msg) {
         // to keep out dataset clean, we decided to not to convert thost equations
         return build_typst_mat(tree, "#none", msg);
     } else {
-        return tree.body.map(
-            row => row.map(
-                cell => build_expression(cell, in_function, msg)
-            ).join(" & ")
-        ).join(" \\ ");
+        return insertBetween(
+            tree.body.map(
+                insertBetween(
+                    row => row.map(
+                        cell => build_expression(cell, msg)
+                    ),
+                    [{ "func": "align-point" }])
+            ),
+            [{ func: "linebreak" }]
+        );
     }
 };
 
 
-build_functions.leftright = function (tree, in_function, msg) {
+build_functions.leftright = function (tree, msg) {
     var left = tree.left;
     var right = tree.right;
 
-    var left_typ = "";
+    var left_typ = left;
     if (left in lrMapping) {
         left_typ = lrMapping[left];
-    } else {
-        left_typ = left;
     }
 
-    var right_typ = "";
+    var right_typ = right;
     if (right in lrMapping) {
         right_typ = lrMapping[right];
-    } else {
-        right_typ = right;
-    }
-
-    if (tree.body.length == 1 &&
-        tree.body[0].type === "ordgroup" &&
-        tree.body[0].body.length == 1 &&
-        tree.body[0].body[0].type === "array") {
-        tree.body[0] = tree.body[0].body[0];
     }
 
     if (tree.body.length == 1 &&
         tree.body[0].type === "array") {
-
         // case
         if (left === "." && right != ".") {
-            return build_typst_cases(tree.body[0], `"${right_typ}"`, true, msg);
+            return build_typst_cases(tree.body[0], right_typ, msg);
         } else if (right === "." && left != ".") {
-            return build_typst_cases(tree.body[0], `"${left_typ}"`, false, msg);
+            return build_typst_cases(tree.body[0], left_typ, msg);
         }
 
         // align
         if (left === "." && right === ".") {
-            return build_functions.array(tree.body[0], in_function, msg);
+            return build_functions.array(tree.body[0], msg);
         }
 
         // vec or mat
@@ -226,38 +256,50 @@ build_functions.leftright = function (tree, in_function, msg) {
                 // \smallmatrix
                 if (tree.body[0].body[0].length === 1) {
                     // vec
-                    return build_typst_vec(tree.body[0], `"${left_typ}"`, msg);
+                    return build_typst_vec(tree.body[0], left_typ, msg);
                 } else {
                     // mat
-                    return build_typst_mat(tree.body[0], `"${left_typ}"`, msg);
+                    return build_typst_mat(tree.body[0], left_typ, msg);
                 }
             }
 
             if (tree.body[0].cols && tree.body[0].cols.length === 1) {
                 // vec
-                return build_typst_vec(tree.body[0], `"${left_typ}"`, msg);
+                return build_typst_vec(tree.body[0], left_typ, msg);
             }
             // mat
-            return build_typst_mat(tree.body[0], `"${left_typ}"`, msg);
+            return build_typst_mat(tree.body[0], left_typ, msg);
         }
 
         // vec
         if (tree.body[0].cols.length == 1) {
-            return build_typst_vec(tree.body[0], `"${left_typ}"`, msg);
+            return build_typst_vec(tree.body[0], left_typ, msg);
         }
     }
 
-
     // mid
     if (left === "." && right != ".") {
-        let mid = right_typ;
-        var body_typ = build_expression(tree.body, true, msg);
-        return `${body_typ} ${build_typst_function("mid", encodeTypstEscape(mid))} `;
-
+        return {
+            func: "sequence",
+            body: [
+                build_expression(tree.body, msg),
+                {
+                    func: "mid",
+                    body: right_typ
+                }
+            ]
+        };
     } else if (left != "." && right === ".") {
-        let mid = left_typ;
-        var body_typ = build_expression(tree.body, true, msg);
-        return `${build_typst_function("mid", encodeTypstEscape(mid))} ${body_typ}`;
+        return {
+            func: "sequence",
+            body: [
+                {
+                    func: "mid",
+                    body: left_typ
+                },
+                build_expression(tree.body, msg),
+            ]
+        };
     }
 
     // auto lr
@@ -266,18 +308,24 @@ build_functions.leftright = function (tree, in_function, msg) {
         return res;
     }
 
-    // special case, lr don't trigger in_function
-    var body_typ = build_expression(tree.body, false, msg);
-    return build_typst_function("lr", `${left_typ} ${body_typ} ${right_typ}`);
-
+    return {
+        func: "lr",
+        body: {
+            func: "sequence",
+            children: [left_typ, build_expression(tree.body, msg), right_typ],
+        }
+    }
 };
 
-build_functions.middle = function (tree, in_function, msg) {
-    return build_typst_function("mid", build_functions.delimsizing(tree, false, msg));
+build_functions.middle = function (tree, msg) {
+    return {
+        func: "mid",
+        body: build_expression(tree, msg)
+    };
 };
 
-build_functions.accent = function (tree, in_function, msg) {
-    var base_typ = build_expression(tree.base, true, msg);
+build_functions.accent = function (tree, msg) {
+    var base_typ = build_expression(tree.base, msg);
     var label = tree.label;
     var accent_typ;
 
@@ -285,59 +333,96 @@ build_functions.accent = function (tree, in_function, msg) {
 
     if (label in accentMapping) {
         accent_typ = accentMapping[label];
-        res = build_typst_function(accent_typ, base_typ, msg);
+        return {
+            func: "accent",
+            base: base_typ,
+            // todo: use unicode
+            accent: accent_typ
+        }
     } else if (label in atomMapping) {
         accent_typ = atomMapping[label];
-        res = build_typst_function(accent_typ, base_typ, msg);
+        return {
+            func: "accent",
+            base: base_typ,
+            // todo: use unicode
+            accent: accent_typ
+        }
     } else {
         switch (label) {
             case "\\bcancel":
-                res = `cancel( inverted: #true , ${base_typ} )`;
-                break;
+                return {
+                    func: "cancel",
+                    inverted: true,
+                    body: base_typ
+                }
             case "\\sout":
-                res = `cancel( angle: #90deg , ${base_typ} )`;
-                break;
+                return {
+                    func: "cancel",
+                    angle: "90deg",
+                    body: base_typ
+                }
             case "\\boxed":
-                res = `#box( stroke: 0.5pt , inset: 6pt , $${base_typ}$ )`;
-                break;
+                return base_typ;
             case "\\overgroup":
-                res = `accent( ${base_typ} , \u{0311} )`;
-                break;
+                return {
+                    func: "accent",
+                    base: base_typ,
+                    accent: "\u{0311}"
+                }
             case "\\overlinesegment":
-                res = `accent( ${base_typ} , \u{20e9} )`;
-                break;
+                return {
+                    func: "accent",
+                    base: base_typ,
+                    accent: "\u{20e9}"
+                }
             case "\\c":
-                res = `${base_typ}\\u{0327}`;
-                break;
+                return {
+                    func: "sequence",
+                    body: [
+                        base_typ,
+                        {
+                            func: "text",
+                            text: "\u{20e9}"
+                        }
+                    ]
+                }
             case "\\textcircled":
                 let body = getSingleBody(tree.base);
                 if (body.type === "atom") {
                     switch (body.text) {
                         case "<":
-                            return "lt.circle";
+                            return {
+                                func: "text",
+                                text: "⧀"
+                            };
                         case ">":
-                            return "gt.circle";
+                            return {
+                                func: "text",
+                                text: "⧁"
+                            };
                         case "=":
-                            return "eq.circle";
+                            return {
+                                func: "text",
+                                text: "⊜"
+                            };
                         case "+":
-                            return "plus.circle";
+                            return {
+                                func: "text",
+                                text: "⊕"
+                            };
                         default:
                             msg.warn(`The textcircled text ${body.text} is not recognized.`);
-                            return "";
+                            return null;
                     }
                 }
-                break;
-            default:
-                msg.warn(`The accent "${label}" is not recognized.`);
-                base_typ = build_expression(tree.base, in_function, msg);
-                res = base_typ;
         }
     }
 
-    return res;
+    msg.warn(`The accent "${label}" is not recognized.`);
+    return build_expression(tree.base, msg);
 };
 
-build_functions.kern = function (tree, in_function, msg) {
+build_functions.kern = function (tree, msg) {
     var unit = tree.dimension.unit;
     var number = tree.dimension.number;
 
@@ -351,33 +436,29 @@ build_functions.kern = function (tree, in_function, msg) {
 
     switch (unit) {
         case "em":
-            switch (true) {
-                case (number < 0.25):
-                    return "thin";
-                case (number < 0.5):
-                    return "space";
-                case (number < 1.5):
-                    return "quad";
-                case (number < 2.5):
-                    return "wide";
-                default:
-                    return "wide";
+            return {
+                func: "h",
+                amount: `${number}em`
             }
         default:
             msg.warn(`The unit "${unit}" is not recognized.`);
-            return "";
+            return null;
     }
 };
 
-build_functions.spacing = function (tree, in_function, msg) {
+build_functions.spacing = function (tree, msg) {
     // TODO: many spaces
     if ("text" in tree) {
         if (["\\ ", " ", "\\nobreakspace", "\\nobreak", "\\allowbreak", "\\space"]
             .includes(tree.text)) {
-            return "space";
+            return {
+                func: "text",
+                text: " "
+            };
         }
     }
     msg.warn(`The space ${JSON.stringify(tree)} is not recognized.`);
+    return null
 };
 
 
@@ -388,7 +469,7 @@ const operators = [
     "Pr", "sec", "sech", "sin", "sinc", "sinh", "sup", "tan", "tanh", "tg", "tr"
 ];
 
-build_functions.op = function (tree, in_function, msg) {
+build_functions.op = function (tree, msg) {
     if (tree.name in opMapping) {
         return opMapping[tree.name];
     } else if ("body" in tree) {
@@ -405,36 +486,26 @@ build_functions.op = function (tree, in_function, msg) {
             }
         }
 
-        if (limits) {
-            return build_typst_function("limits", build_expression(tree.body, true, msg));
-        }
-        return build_expression(tree.body, in_function, msg);
+        return {
+            func: "op",
+            ...limits && { limits: limits },
+            text: build_expression(tree.body, msg)
+        };
     }
 
     msg.warn(`The op "${JSON.stringify(tree)}" is not recognized.`);
-    return "";
+    return null;
 };
 
-build_functions.operatorname = function (tree, in_function, msg) {
-    const allMathord = tree.body.every(element => element.type === 'mathord');
-
-    if (allMathord) {
-        const allLiteral = tree.body.every(element => !element.text.startsWith("\\"));
-        if (allLiteral) {
-            const mergedText = tree.body.map(element => element.text).join('');
-
-            if (operators.includes(mergedText)) {
-                return mergedText;
-            }
-        }
-    }
-    const mergedOp = build_typst_upright_or_str(tree, msg);
-
-    return build_typst_function("op", mergedOp);
+build_functions.operatorname = function (tree, msg) {
+    return {
+        func: "op",
+        text: build_expression(tree.body, msg)
+    };
 };
 
 
-build_functions.font = function (tree, in_function, msg) {
+build_functions.font = function (tree, msg) {
     var font = tree.font;
     var fontCommand;
 
@@ -453,7 +524,22 @@ build_functions.font = function (tree, in_function, msg) {
                 }
             }
         }
-        return build_typst_function("bold", build_typst_function("upright", build_expression(tree.body, true, msg)));
+        return {
+            func: "styled",
+            styles: JSON.stringify({
+                styles: [
+                    {
+                        type: "property",
+                        bold: true,
+                    },
+                    {
+                        type: "property",
+                        italic: false,
+                    }
+                ]
+            }),
+            child: build_expression(tree.body, msg)
+        };
     }
     else {
         msg.warn(`The font "${font}" is not recognized.`);
@@ -467,12 +553,12 @@ build_functions.font = function (tree, in_function, msg) {
         }
     }
 
-    return `${fontCommand}( ${build_expression(tree.body, true, msg)} )`;
+    return `${fontCommand}( ${build_expression(tree.body, msg)} )`;
 };
 
 const sizes = ["1.2em", "1.8em", "2.4em", "3em"];
 
-build_functions.delimsizing = function (tree, in_function, msg) {
+build_functions.delimsizing = function (tree, msg) {
     var delim_typ;
     if (tree.delim in atomMapping) {
         delim_typ = atomMapping[tree.delim];
@@ -485,70 +571,70 @@ build_functions.delimsizing = function (tree, in_function, msg) {
     return delim_typ;
 };
 
-build_functions.sizing = function (tree, in_function, msg) {
+build_functions.sizing = function (tree, msg) {
     // ignore
-    return build_expression(tree.body, in_function, msg);
+    return build_expression(tree.body, msg);
 };
 
-build_functions.internal = function (tree, in_function, msg) {
+build_functions.internal = function (tree, msg) {
     return "thin";
 };
 
-build_functions.styling = function (tree, in_function, msg) {
-    return build_expression(tree.body, in_function, msg);
+build_functions.styling = function (tree, msg) {
+    return build_expression(tree.body, msg);
 };
 
-build_functions.overline = function (tree, in_function, msg) {
-    return build_typst_function("overline", build_expression(tree.body, true, msg));
+build_functions.overline = function (tree, msg) {
+    return build_typst_function("overline", build_expression(tree.body, msg));
 };
 
-build_functions.underline = function (tree, in_function, msg) {
-    return build_typst_function("underline", build_expression(tree.body, true, msg));
+build_functions.underline = function (tree, msg) {
+    return build_typst_function("underline", build_expression(tree.body, msg));
 };
 
-build_functions.xArrow = function (tree, in_function, msg) {
+build_functions.xArrow = function (tree, msg) {
     var label_typ;
     if (tree.label in xArrowMapping) {
         label_typ = xArrowMapping[tree.label];
 
-        return `${label_typ} ^ ( ${build_expression(tree.body, false, msg)} )`;
+        return `${label_typ} ^ ( ${build_expression(tree.body, msg)} )`;
     }
 
     msg.warn(`The xArrow "${tree.label}" is not recognized.`);
 };
 
-build_functions.tag = function (tree, in_function, msg) {
-    return build_expression(tree.body, in_function, msg);
+build_functions.tag = function (tree, msg) {
+    return build_expression(tree.body, msg);
 };
 
-build_functions.rule = function (tree, in_function, msg) {
+build_functions.rule = function (tree, msg) {
     // ignore
     return;
 };
 
-build_functions.llap = function (tree, in_function, msg) {
+build_functions.llap = function (tree, msg) {
     // ignore
     return;
 };
 
-build_functions.rlap = function (tree, in_function, msg) {
+build_functions.rlap = function (tree, msg) {
     // ignore
     return;
 };
 
-build_functions.phantom = function (tree, in_function, msg) {
+build_functions.phantom = function (tree, msg) {
     // ignore
     return;
     //return build_typst_function("hide", build_expression(tree.body));
 };
 
-build_functions.mclass = function (tree, in_function, msg) {
+build_functions.mclass = function (tree, msg) {
     // TODO: don't fucking scipts everything
     // return build_typst_function("scripts", build_expression(tree.body));
-    return build_expression(tree.body, in_function, msg);
+    return build_expression(tree.body, msg);
 };
 
-build_functions.htmlmathml = function (tree, in_function, msg) {
+build_functions.htmlmathml = function (tree, msg) {
     const body = getSingleBody(tree.mathml);
     if (body) {
         const text = body.text;
@@ -576,14 +662,14 @@ build_functions.htmlmathml = function (tree, in_function, msg) {
                 msg.warn(`The htmlmathml text ${text} is not recognized.`);
         }
     }
-    return build_expression(tree.html, in_function, msg);
+    return build_expression(tree.html, msg);
 };
 
-build_functions.horizBrace = function (tree, in_function, supsub = null, msg) {
-    let body_typ = build_expression(tree.base, true, msg);
+build_functions.horizBrace = function (tree, supsub = null, msg) {
+    let body_typ = build_expression(tree.base, msg);
     let args = body_typ;
     if (supsub) {
-        args = [body_typ, build_expression(supsub, true, msg)];
+        args = [body_typ, build_expression(supsub, msg)];
     }
     switch (tree.label) {
         case "\\underbrace":
@@ -596,31 +682,31 @@ build_functions.horizBrace = function (tree, in_function, supsub = null, msg) {
     }
 };
 
-build_functions.hbox = function (tree, in_function, msg) {
-    return build_expression(tree.body, in_function, msg);
+build_functions.hbox = function (tree, msg) {
+    return build_expression(tree.body, msg);
 };
 
-build_functions.vphantom = function (tree, in_function, msg) {
+build_functions.vphantom = function (tree, msg) {
     return "zws";
 };
 
-build_functions.hphantom = function (tree, in_function, msg) {
+build_functions.hphantom = function (tree, msg) {
     return "";
 };
 
-build_functions.pmb = function (tree, in_function, msg) {
-    return build_typst_function("bold", build_expression(tree.body, true, msg));
+build_functions.pmb = function (tree, msg) {
+    return build_typst_function("bold", build_expression(tree.body, msg));
 };
 
-build_functions.enclose = function (tree, in_function, msg) {
-    return build_expression(tree.body, false, msg);
+build_functions.enclose = function (tree, msg) {
+    return build_expression(tree.body, msg);
 };
 
-build_functions.smash = function (tree, in_function, msg) {
-    return build_expression(tree.body, false, msg);
+build_functions.smash = function (tree, msg) {
+    return build_expression(tree.body, msg);
 };
 
-build_functions.verb = function (tree, in_function, msg) {
+build_functions.verb = function (tree, msg) {
     return `${tree.body}`;
 };
 
@@ -666,7 +752,7 @@ function build_typst_mat(array, delim, msg) {
 
     body_typ = body.map(
         row => row.map(
-            cell => build_expression(cell, true, msg)
+            cell => build_expression(cell, msg)
         ).join(" , ")
     ).join(" ; ");
 
@@ -682,7 +768,7 @@ function build_typst_vec(array, delim, msg) {
     var body = array.body;
 
     body_typ = body.map(
-        row => build_expression(row[0], true, msg)
+        row => build_expression(row[0], msg)
     ).join(" , ");
 
     if (delim && delim != "\"(\"") {
@@ -703,7 +789,7 @@ function build_typst_cases(array, delim, rev, msg) {
 
     param += array.body.map(
         row => row.map(
-            cell => build_expression(cell, true, msg)
+            cell => build_expression(cell, msg)
         ).join(" & ")
     ).join(" , ");
 
@@ -724,7 +810,7 @@ function build_typst_autolr(left, right, body, msg) {
 
     for (const pair of pairs) {
         if (pair.lefts.includes(left) && pair.rights.includes(right)) {
-            var body_typ = build_expression(body, pair.in_function, msg);
+            var body_typ = build_expression(body, pair.msg);
             return [true, pair.format(body_typ, left, right)];
         }
     }
@@ -778,7 +864,7 @@ function build_typst_upright_or_str(tree, msg) {
         }
 
         const mergedText = body.map(element => {
-            return build_expression(element, true, msg);
+            return build_expression(element, msg);
         }).join(' ');
         return build_typst_function("upright", mergedText);
     } else if ("text" in tree.body && tree.body.text === "d") {
@@ -787,7 +873,7 @@ function build_typst_upright_or_str(tree, msg) {
 }
 
 
-function build_array(tree, in_function, msg) {
+function build_array(tree, msg) {
     let result = [];
     let buffer_number = [];
 
@@ -802,13 +888,13 @@ function build_array(tree, in_function, msg) {
             }
 
             let numbers = tree.slice(i, j + 1);
-            result.push(numbers.map(number => build_expression(number, false, msg)).join(""));
+            result.push(numbers.map(number => build_expression(number, msg)).join(""));
             i = j; // skip
         }
         else if (tree[i].type === 'atom' && tree[i].family === 'open') {
             // opening and closing
             if (buffer_number.length > 0) {
-                result.push(buffer_number.map(number => build_expression(number, false, msg)).join(""));
+                result.push(buffer_number.map(number => build_expression(number, msg)).join(""));
                 buffer_number = [];
             }
 
@@ -829,12 +915,12 @@ function build_array(tree, in_function, msg) {
 
             if (bracketCount === 0) {
                 // found
-                let innerContent = build_array(tree.slice(i + 1, j), false, msg);
+                let innerContent = build_array(tree.slice(i + 1, j), msg);
                 result.push(openBracket + " " + innerContent + " " + closeBracket);
                 i = j; // skip
             } else {
                 // not found
-                result.push(build_expression(tree[i], in_function, msg));
+                result.push(build_expression(tree[i], msg));
             }
         } else if (tree[i].type === 'htmlmathml') {
             // rlap
@@ -853,9 +939,9 @@ function build_array(tree, in_function, msg) {
                     }
                 }
             }
-            result.push(build_expression(tree[i], in_function, msg));
+            result.push(build_expression(tree[i], msg));
         } else {
-            result.push(build_expression(tree[i], in_function, msg));
+            result.push(build_expression(tree[i], msg));
         }
     }
 
@@ -868,12 +954,12 @@ function build_array(tree, in_function, msg) {
 
 
 
-export function build_expression(tree, in_function, msg) {
+export function build_expression(tree, msg) {
     if (Array.isArray(tree)) {
-        return build_array(tree, in_function, msg);
+        return build_array(tree, msg);
     } else if (typeof tree === 'object' && tree !== null) {
         if (tree.type in build_functions) {
-            return build_functions[tree.type](tree, in_function, msg);
+            return build_functions[tree.type](tree, msg);
         } else {
             msg.warn(`The tree type "${tree.type}" is not recognized.`);
             return "";
