@@ -853,9 +853,7 @@ function build_typst_vec(array, delim, msg) {
 
 function build_typst_cases(array, delim, rev, msg) {
     var children = array.body.map(
-        row => row.map(
-            cell => build_expression(cell, msg)
-        )
+        row => build_expression(row, msg)
     );
 
     return {
@@ -982,7 +980,7 @@ function build_array(tree, msg) {
             let numbers = tree.slice(i, j + 1);
             result.push({
                 func: "text",
-                text: numbers.map(number => build_expression(number, msg)).join("")
+                text: numbers.map(number => number.text).join("")
             });
             i = j; // skip
         }
