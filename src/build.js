@@ -961,7 +961,7 @@ function build_typst_upright_or_str(tree, msg) {
             }
         }
 
-        let body = build_expression(body, msg)
+        let child = build_expression(body, msg)
         return {
             func: "styled",
             styles: JSON.stringify([
@@ -972,7 +972,7 @@ function build_typst_upright_or_str(tree, msg) {
                     },
                 }
             ]),
-            child: body ? body : { func: "text", text: "" }
+            child: child ? child : { func: "text", text: "" }
         };
     } else if ("text" in tree.body && tree.body.text === "d") {
         return dif;
