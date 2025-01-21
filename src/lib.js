@@ -43,7 +43,12 @@ export default function convert(expression) {
     }
     var typ_expression = build_expression(tree, false, msg);
 
-    return { "expr": JSON.stringify(typ_expression), "msg": msg.getAll() };
+    return {
+        "expr": JSON.stringify({
+            func: "equation",
+            body: typ_expression
+        }), "msg": msg.getAll()
+    };
 
     /* post process
     for (var i = 0; i < 300; ++i) {
