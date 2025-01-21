@@ -216,10 +216,10 @@ build_functions.array = function (tree, msg) {
             children: insertBetween(
                 tree.body.map(
                     row => insertBetween(
-                        row.map(cell => build_expression(cell, msg)),
+                        row.map(cell => build_expression(cell, msg)).filter(x => x != null),
                         [{ "func": "align-point" }]
                     )
-                ),
+                ).filter(x => x != null),
                 [{ func: "linebreak" }]
             ).flat()
         };
@@ -830,8 +830,8 @@ function build_typst_mat(array, delim, msg) {
     var rows = array.body.map(
         row => row.map(
             cell => build_expression(cell, msg)
-        )
-    )
+        ).filter(x => x != null)
+    ).filter(x => x != null)
 
     return {
         func: "mat",
@@ -847,7 +847,7 @@ function build_typst_mat(array, delim, msg) {
 function build_typst_vec(array, delim, msg) {
     var children = array.body.map(
         row => build_expression(row[0], msg)
-    );
+    ).filter(x => x != null);
 
     return {
         func: "vec",
@@ -863,7 +863,7 @@ function build_typst_vec(array, delim, msg) {
 function build_typst_cases(array, delim, rev, msg) {
     var children = array.body.map(
         row => build_expression(row, msg)
-    );
+    ).filter(x => x != null);
 
     return {
         func: "cases",
