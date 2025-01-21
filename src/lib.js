@@ -35,6 +35,11 @@ function preprocess(exp) {
 export default function convert(expression) {
     var msg = newMessage()
 
+    if (expression.trim() === "") {
+        msg.warn("Empty expression");
+        return { "expr": "", "msg": msg.getAll() };
+    }
+
     try {
         var tree = katex.__parse(preprocess(expression), { displayMode: true });
     } catch (e) {
