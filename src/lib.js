@@ -41,7 +41,7 @@ export default function convert(expression) {
         msg.err(`Failed to parse: ${e}`);
         return { "expr": "", "msg": msg.getAll() };
     }
-    var typ_expression = build_expression(tree, false, msg);
+    var typ_expression = build_expression(tree, msg);
 
     return {
         "expr": JSON.stringify({
