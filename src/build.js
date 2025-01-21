@@ -1,4 +1,4 @@
-import { negationMap, xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
+import { functionalAccentMappint, negationMapping, xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstFunctionEscape, encodeTypstEscape } from "./escape.js";
 import { isDigitOrDot, getSingleBody, getMatchingBracket, insertBetween } from "./utils.js";
 
@@ -208,16 +208,18 @@ build_functions.array = function (tree, msg) {
         // to keep out dataset clean, we decided to not to convert thost equations
         return build_typst_mat(tree, "#none", msg);
     } else {
-        return insertBetween(
-            tree.body.map(
-                insertBetween(
-                    row => row.map(
-                        cell => build_expression(cell, msg)
-                    ),
-                    [{ "func": "align-point" }])
-            ),
-            [{ func: "linebreak" }]
-        );
+        return {
+            func: "sequence",
+            children: insertBetween(
+                tree.body.map(
+                    row => insertBetween(
+                        row.map(cell => build_expression(cell, msg)),
+                        [{ "func": "align-point" }]
+                    )
+                ),
+                [{ func: "linebreak" }]
+            ).flat()
+        };
     }
 };
 
@@ -324,7 +326,7 @@ build_functions.leftright = function (tree, msg) {
 build_functions.middle = function (tree, msg) {
     return {
         func: "mid",
-        body: build_expression(tree, msg)
+        body: build_expression(tree.delim, msg)
     };
 };
 
@@ -335,6 +337,13 @@ build_functions.accent = function (tree, msg) {
 
     var res;
 
+    if (label in functionalAccentMappint) {
+        res = functionalAccentMappint[label];
+        return {
+            func: res,
+            base: base_typ,
+        }
+    }
     if (label in accentMapping) {
         accent_typ = accentMapping[label];
         return {
@@ -352,6 +361,12 @@ build_functions.accent = function (tree, msg) {
             accent: accent_typ
         }
     } else {
+        if (["cancel", "not", "xcalcel"].includes(label)) {
+            return {
+                func: "cancel",
+                body: base_typ
+            }
+        }
         switch (label) {
             case "\\bcancel":
                 return {
@@ -695,7 +710,7 @@ build_functions.mclass = function (tree, msg) {
 build_functions.htmlmathml = function (tree, msg) {
     const body = getSingleBody(tree.mathml);
 
-    function text(x) {
+    function textFunc(x) {
         return {
             func: "text",
             text: x
@@ -711,17 +726,17 @@ build_functions.htmlmathml = function (tree, msg) {
 
         switch (text) {
             case "≠":
-                return text("≠");
+                return textFunc("≠");
             case "∉":
-                return text("∉");
+                return textFunc("∉");
             case "ȷ":
-                return text("𝚥");
+                return textFunc("𝚥");
             case "ı":
-                return text("𝚤");
+                return textFunc("𝚤");
             case "©":
-                return text("©");
+                return textFunc("©");
             case "®":
-                return text("®");
+                return textFunc("®");
             case "̸":
                 break;
             default:
@@ -913,8 +928,11 @@ function build_typst_upright_or_str(tree, msg) {
 
             if (operators.includes(mergedText)) {
                 return {
-                    func: "text",
-                    text: mergedText
+                    func: "op",
+                    body: {
+                        func: "text",
+                        text: mergedText
+                    }
                 };
             }
 
@@ -1019,7 +1037,7 @@ function build_array(tree, msg) {
             if ("body" in tree[i].html[0] && tree[i].html[0].body[0].type === "lap") {
                 if (tree[i].html[0].body[0].body.body[0].text === '\\@not') {
                     if (i + 1 < tree.length && tree[i + 1].type === 'atom') {
-                        const negatedSymbol = negationMap[tree[i + 1].text];
+                        const negatedSymbol = negationMapping[tree[i + 1].text];
                         if (negatedSymbol) {
                             result.push({
                                 func: "text",
@@ -1056,8 +1074,17 @@ function build_array(tree, msg) {
 
 export function build_expression(tree, msg) {
     if (Array.isArray(tree)) {
+        if (tree.length === 1) {
+            return build_expression(tree[0], msg);
+        }
         return build_array(tree, msg);
-    } else if (typeof tree === 'object' && tree !== null) {
+    } else if (typeof tree === 'string') {
+        return {
+            func: "text",
+            text: tree
+        }
+    }
+    else if (typeof tree === 'object' && tree !== null) {
         if (tree.type in build_functions) {
             return build_functions[tree.type](tree, msg);
         } else {
