@@ -90,6 +90,8 @@ build_functions.text = function (tree, msg) {
                 }
             }
         }
+
+        var body = build_expression(tree.body, msg)
         return {
             func: "styled",
             styles: JSON.stringify([
@@ -100,7 +102,7 @@ build_functions.text = function (tree, msg) {
                     },
                 }
             ]),
-            child: build_expression(tree.body, msg)
+            child: body ? body : { func: "text", text: "" }
         };
     } else {
         return build_expression(tree.body, msg);
@@ -169,15 +171,15 @@ build_functions.genfrac = function (tree, msg) {
     if (tree.hasBarLine) {
         return {
             func: "frac",
-            num: numer,
-            denom: denom
+            num: numer ? numer : { func: "text", text: "" },
+            denom: denom ? denom : { func: "text", text: "" }
         };
     }
     else {
         return {
             func: "binom",
-            upper: numer,
-            lower: [denom]
+            upper: numer ? numer : { func: "text", text: "" },
+            lower: [denom ? denom : { func: "text", text: "" }]
         };
     }
 };
@@ -189,13 +191,13 @@ build_functions.sqrt = function (tree, msg) {
         return {
             func: "root",
             index: index,
-            radicand: body
+            radicand: body ? body : { func: "text", text: "" }
         }
     }
     else {
         return {
             func: "root",
-            radicand: body
+            radicand: body ? body : { func: "text", text: "" }
         }
     }
 };
@@ -313,6 +315,7 @@ build_functions.leftright = function (tree, msg) {
         };
     }
 
+    let body = build_expression(tree.body, msg)
     return {
         func: "lr",
         body: {
@@ -322,7 +325,7 @@ build_functions.leftright = function (tree, msg) {
                     func: "text",
                     text: left_typ
                 },
-                build_expression(tree.body, msg),
+                ...body ? [body] : [],
                 {
                     func: "text",
                     text: right_typ
@@ -358,7 +361,6 @@ build_functions.accent = function (tree, msg) {
         return {
             func: "accent",
             base: base_typ,
-            // todo: use unicode
             accent: accent_typ
         }
     } else if (label in atomMapping) {
@@ -366,7 +368,6 @@ build_functions.accent = function (tree, msg) {
         return {
             func: "accent",
             base: base_typ,
-            // todo: use unicode
             accent: accent_typ
         }
     } else {
@@ -514,10 +515,11 @@ build_functions.op = function (tree, msg) {
             }
         }
 
+        var body = build_expression(tree.body, msg)
         return {
             func: "op",
             ...limits && { limits: limits },
-            text: build_expression(tree.body, msg)
+            text: body ? body : { func: "text", text: "" }
         };
     }
 
@@ -526,9 +528,10 @@ build_functions.op = function (tree, msg) {
 };
 
 build_functions.operatorname = function (tree, msg) {
+    var body = build_expression(tree.body, msg)
     return {
         func: "op",
-        text: build_expression(tree.body, msg)
+        text: body ? body : { func: "text", text: "" }
     };
 };
 
@@ -656,16 +659,18 @@ build_functions.styling = function (tree, msg) {
 };
 
 build_functions.overline = function (tree, msg) {
+    var body = build_expression(tree.body, msg);
     return {
         func: "overline",
-        body: build_expression(tree.body, msg)
+        body: body ? body : { func: "text", text: "" }
     };
 };
 
 build_functions.underline = function (tree, msg) {
+    var body = build_expression(tree.body, msg)
     return {
         func: "underline",
-        body: build_expression(tree.body, msg)
+        body: body ? body : { func: "text", text: "" }
     };
 };
 
@@ -765,13 +770,13 @@ build_functions.horizBrace = function (tree, msg, supsub = null) {
         case "\\underbrace":
             return {
                 func: "overbrace",
-                body: body_typ,
+                body: body_typ ? body_typ : { func: "text", text: "" },
                 ...anno_typ && { annotation: anno_typ }
             };
         case "\\overbrace":
             return {
                 func: "underbrace",
-                body: body_typ,
+                body: body_typ ? body_typ : { func: "text", text: "" },
                 ...anno_typ && { annotation: anno_typ }
             };
         default:
@@ -956,6 +961,7 @@ function build_typst_upright_or_str(tree, msg) {
             }
         }
 
+        let body = build_expression(body, msg)
         return {
             func: "styled",
             styles: JSON.stringify([
@@ -966,7 +972,7 @@ function build_typst_upright_or_str(tree, msg) {
                     },
                 }
             ]),
-            child: build_expression(body, msg)
+            child: body ? body : { func: "text", text: "" }
         };
     } else if ("text" in tree.body && tree.body.text === "d") {
         return dif;
@@ -1024,7 +1030,7 @@ function build_array(tree, msg) {
                                 func: "text",
                                 text: openBracket
                             },
-                            innerContent,
+                            ...innerContent ? [innerContent] : [],
                             {
                                 func: "text",
                                 text: closeBracket
