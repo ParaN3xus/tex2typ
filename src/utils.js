@@ -9,6 +9,10 @@ export function getMatchingBracket(openBracket) {
         '[': ']',
         '{': '}',
         '|': '|',
+        ')': '(',
+        ']': '[',
+        '}': '{',
+        '|': '|',
     };
     return bracketPairs[openBracket] || '';
 }

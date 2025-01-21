@@ -245,9 +245,9 @@ build_functions.leftright = function (tree, msg) {
         tree.body[0].type === "array") {
         // case
         if (left === "." && right != ".") {
-            return build_typst_cases(tree.body[0], right_typ, msg);
+            return build_typst_cases(tree.body[0], right_typ, true, msg);
         } else if (right === "." && left != ".") {
-            return build_typst_cases(tree.body[0], left_typ, msg);
+            return build_typst_cases(tree.body[0], left_typ, false, msg);
         }
 
         // align
@@ -872,6 +872,7 @@ function build_typst_cases(array, delim, rev, msg) {
                 delim, getMatchingBracket(delim)
             ]
         },
+        ...rev && { reverse: true },
         children: children
     }
 }
