@@ -727,7 +727,7 @@ build_functions.htmlmathml = function (tree, msg) {
         const text = body.text;
 
         if (["⌟", "⌞", "⌜", "⌝"].includes(text)) {
-            return text;
+            return textFunc(text);
         }
 
         switch (text) {
