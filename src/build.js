@@ -109,7 +109,7 @@ build_functions.text = function (tree, msg) {
 
 build_functions.supsub = function (tree, msg) {
     if (tree.base && tree.base.type === "horizBrace") {
-        return build_functions.horizBrace(tree.base, tree.sup ? tree.sup : tree.sub);
+        return build_functions.horizBrace(tree.base, msg, tree.sup ? tree.sup : tree.sub);
     }
     var base_typ = tree.base ? build_expression(tree.base, msg) : null;
 
@@ -755,7 +755,7 @@ build_functions.htmlmathml = function (tree, msg) {
     return build_expression(tree.html, msg);
 };
 
-build_functions.horizBrace = function (tree, supsub = null, msg) {
+build_functions.horizBrace = function (tree, msg, supsub = null) {
     let body_typ = build_expression(tree.base, msg);
     let anno_typ = null
     if (supsub) {
