@@ -341,7 +341,7 @@ build_functions.accent = function (tree, msg) {
         res = functionalAccentMappint[label];
         return {
             func: res,
-            base: base_typ,
+            body: base_typ,
         }
     }
     if (label in accentMapping) {
