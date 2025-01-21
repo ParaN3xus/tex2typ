@@ -7,7 +7,8 @@ export function getMatchingBracket(openBracket) {
     const bracketPairs = {
         '(': ')',
         '[': ']',
-        '{': '}'
+        '{': '}',
+        '|': '|',
     };
     return bracketPairs[openBracket] || '';
 }

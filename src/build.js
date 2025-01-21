@@ -143,7 +143,7 @@ build_functions.supsub = function (tree, msg) {
             if (sup_typ) {
                 return {
                     func: "attach",
-                    base: base_typ,
+                    base: base_typ ? base_typ : { func: "text", text: "" },
                     tr: sup_typ,
                     ...sub_typ && { b: sub_typ }
                 };
@@ -154,7 +154,7 @@ build_functions.supsub = function (tree, msg) {
     }
     return {
         func: "attach",
-        base: base_typ,
+        base: base_typ ? base_typ : { func: "text", text: "" },
         ...sup_typ && { t: sup_typ },
         ...sub_typ && { b: sub_typ }
     };
@@ -287,7 +287,10 @@ build_functions.leftright = function (tree, msg) {
                 build_expression(tree.body, msg),
                 {
                     func: "mid",
-                    body: right_typ
+                    body: {
+                        func: "text",
+                        text: right_typ
+                    }
                 }
             ]
         };
@@ -297,7 +300,10 @@ build_functions.leftright = function (tree, msg) {
             children: [
                 {
                     func: "mid",
-                    body: left_typ
+                    body: {
+                        func: "text",
+                        text: left_typ
+                    }
                 },
                 build_expression(tree.body, msg),
             ]
