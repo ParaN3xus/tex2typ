@@ -283,7 +283,7 @@ build_functions.leftright = function (tree, msg) {
     if (left === "." && right != ".") {
         return {
             func: "sequence",
-            body: [
+            children: [
                 build_expression(tree.body, msg),
                 {
                     func: "mid",
@@ -294,7 +294,7 @@ build_functions.leftright = function (tree, msg) {
     } else if (left != "." && right === ".") {
         return {
             func: "sequence",
-            body: [
+            children: [
                 {
                     func: "mid",
                     body: left_typ
@@ -397,7 +397,7 @@ build_functions.accent = function (tree, msg) {
             case "\\c":
                 return {
                     func: "sequence",
-                    body: [
+                    children: [
                         base_typ,
                         {
                             func: "text",
