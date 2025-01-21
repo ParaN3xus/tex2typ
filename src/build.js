@@ -52,7 +52,7 @@ build_functions.textord = function (tree, msg) {
 };
 
 build_functions.ordgroup = function (tree, msg) {
-    return build_expression(tree.body)
+    return build_expression(tree.body, msg)
 };
 
 build_functions.mathchoice = function (tree, msg) {
@@ -89,18 +89,18 @@ build_functions.text = function (tree, msg) {
         }
         return {
             func: "styled",
-            styles: JSON.stringify({
-                styles: [
-                    {
-                        type: "property",
-                        italic: false,
-                    }
-                ]
-            }),
-            child: build_expression(tree.body)
+            styles: JSON.stringify([
+                {
+                    type: "property",
+                    style: {
+                        italic: false
+                    },
+                }
+            ]),
+            child: build_expression(tree.body, msg)
         };
     } else {
-        return build_expression(tree.body);
+        return build_expression(tree.body, msg);
     }
 };
 
@@ -302,17 +302,21 @@ build_functions.leftright = function (tree, msg) {
         };
     }
 
-    // auto lr
-    const [is_auto_lr, res] = build_typst_autolr(left, right, tree.body, msg);
-    if (is_auto_lr) {
-        return res;
-    }
-
     return {
         func: "lr",
         body: {
             func: "sequence",
-            children: [left_typ, build_expression(tree.body, msg), right_typ],
+            children: [
+                {
+                    func: "text",
+                    text: left_typ
+                },
+                build_expression(tree.body, msg),
+                {
+                    func: "text",
+                    text: right_typ
+                },
+            ],
         }
     }
 };
@@ -520,24 +524,34 @@ build_functions.font = function (tree, msg) {
             if (allLiteral) {
                 const mergedText = tree.body.body.map(element => element.text).join('');
                 if (mergedText.length > 1) {
-                    return build_typst_function("bold", `"${mergedText}"`);
+                    return {
+                        func: "styled",
+                        styles: JSON.stringify([
+                            {
+                                type: "property",
+                                style: { bold: true },
+                            },
+                        ]),
+                        child: {
+                            func: "text",
+                            text: mergedText
+                        }
+                    };
                 }
             }
         }
         return {
             func: "styled",
-            styles: JSON.stringify({
-                styles: [
-                    {
-                        type: "property",
-                        bold: true,
-                    },
-                    {
-                        type: "property",
-                        italic: false,
-                    }
-                ]
-            }),
+            styles: JSON.stringify([
+                {
+                    type: "property",
+                    style: { bold: true },
+                },
+                {
+                    type: "property",
+                    style: { italic: false },
+                }
+            ]),
             child: build_expression(tree.body, msg)
         };
     }
@@ -553,7 +567,37 @@ build_functions.font = function (tree, msg) {
         }
     }
 
-    return `${fontCommand}( ${build_expression(tree.body, msg)} )`;
+    const fontStyleMapping = {
+        upright: { italic: false },
+        italic: { italic: true },
+        sans: { variant: "Sans" },
+        mono: { variant: "Mono" },
+        bb: { variant: "Bb" },
+        cal: { variant: "Cal" },
+        frak: { variant: "Frak" },
+        bold: { bold: true },
+    }
+
+    if (!fontCommand) {
+        return build_expression(tree.body, msg);
+    }
+
+
+    if (fontCommand in fontStyleMapping) {
+        return {
+            func: "styled",
+            styles: JSON.stringify([
+                {
+                    type: "property",
+                    style: fontStyleMapping[fontCommand]
+                }
+            ]),
+            child: build_expression(tree.body, msg)
+        }
+    }
+
+    msg.warn(`The font "${font}" is not recognized.`);
+    return build_expression(tree.body, msg);
 };
 
 const sizes = ["1.2em", "1.8em", "2.4em", "3em"];
@@ -568,7 +612,10 @@ build_functions.delimsizing = function (tree, msg) {
         delim_typ = decodeLatexEscape(tree.delim);
     }
 
-    return delim_typ;
+    return {
+        func: "text",
+        text: delim_typ
+    };
 };
 
 build_functions.sizing = function (tree, msg) {
@@ -577,7 +624,7 @@ build_functions.sizing = function (tree, msg) {
 };
 
 build_functions.internal = function (tree, msg) {
-    return "thin";
+    return { func: "h", amount: "0.17em" };
 };
 
 build_functions.styling = function (tree, msg) {
@@ -585,11 +632,17 @@ build_functions.styling = function (tree, msg) {
 };
 
 build_functions.overline = function (tree, msg) {
-    return build_typst_function("overline", build_expression(tree.body, msg));
+    return {
+        func: "overline",
+        body: build_expression(tree.body, msg)
+    };
 };
 
 build_functions.underline = function (tree, msg) {
-    return build_typst_function("underline", build_expression(tree.body, msg));
+    return {
+        func: "underline",
+        body: build_expression(tree.body, msg)
+    };
 };
 
 build_functions.xArrow = function (tree, msg) {
@@ -597,7 +650,14 @@ build_functions.xArrow = function (tree, msg) {
     if (tree.label in xArrowMapping) {
         label_typ = xArrowMapping[tree.label];
 
-        return `${label_typ} ^ ( ${build_expression(tree.body, msg)} )`;
+        return {
+            func: "attach",
+            base: build_expression(tree.body, msg),
+            t: {
+                func: "text",
+                text: label_typ
+            }
+        }
     }
 
     msg.warn(`The xArrow "${tree.label}" is not recognized.`);
@@ -609,33 +669,39 @@ build_functions.tag = function (tree, msg) {
 
 build_functions.rule = function (tree, msg) {
     // ignore
-    return;
+    return null;
 };
 
 build_functions.llap = function (tree, msg) {
     // ignore
-    return;
+    return null;
 };
 
 build_functions.rlap = function (tree, msg) {
     // ignore
-    return;
+    return null;
 };
 
 build_functions.phantom = function (tree, msg) {
     // ignore
-    return;
-    //return build_typst_function("hide", build_expression(tree.body));
+    return null;
 };
 
 build_functions.mclass = function (tree, msg) {
     // TODO: don't fucking scipts everything
-    // return build_typst_function("scripts", build_expression(tree.body));
     return build_expression(tree.body, msg);
 };
 
 build_functions.htmlmathml = function (tree, msg) {
     const body = getSingleBody(tree.mathml);
+
+    function text(x) {
+        return {
+            func: "text",
+            text: x
+        }
+    }
+
     if (body) {
         const text = body.text;
 
@@ -645,17 +711,17 @@ build_functions.htmlmathml = function (tree, msg) {
 
         switch (text) {
             case "≠":
-                return "!=";
+                return text("≠");
             case "∉":
-                return "in.not";
+                return text("∉");
             case "ȷ":
-                return "dotless.j";
+                return text("𝚥");
             case "ı":
-                return "dotless.i";
+                return text("𝚤");
             case "©":
-                return "copyright";
+                return text("©");
             case "®":
-                return "trademark.registered";
+                return text("®");
             case "̸":
                 break;
             default:
@@ -667,18 +733,26 @@ build_functions.htmlmathml = function (tree, msg) {
 
 build_functions.horizBrace = function (tree, supsub = null, msg) {
     let body_typ = build_expression(tree.base, msg);
-    let args = body_typ;
+    let anno_typ = null
     if (supsub) {
-        args = [body_typ, build_expression(supsub, msg)];
+        anno_typ = build_expression(supsub, msg);
     }
     switch (tree.label) {
         case "\\underbrace":
-            return build_typst_function("underbrace", args);
+            return {
+                func: "overbrace",
+                body: body_typ,
+                ...anno_typ && { annotation: anno_typ }
+            };
         case "\\overbrace":
-            return build_typst_function("overbrace", args);
+            return {
+                func: "underbrace",
+                body: body_typ,
+                ...anno_typ && { annotation: anno_typ }
+            };
         default:
             msg.warn(`The horizBrace label "${tree.label}" is not recognized.`);
-            return "";
+            return null;
     }
 };
 
@@ -687,15 +761,29 @@ build_functions.hbox = function (tree, msg) {
 };
 
 build_functions.vphantom = function (tree, msg) {
-    return "zws";
+    return {
+        func: "text",
+        text: ""
+    };
 };
 
 build_functions.hphantom = function (tree, msg) {
-    return "";
+    return null;
 };
 
 build_functions.pmb = function (tree, msg) {
-    return build_typst_function("bold", build_expression(tree.body, msg));
+    return {
+        func: "styled",
+        body: build_expression(tree.body, msg),
+        styles: JSON.stringify([
+            {
+                type: "property",
+                style: {
+                    italic: false
+                },
+            }
+        ]),
+    };
 };
 
 build_functions.enclose = function (tree, msg) {
@@ -707,119 +795,92 @@ build_functions.smash = function (tree, msg) {
 };
 
 build_functions.verb = function (tree, msg) {
-    return `${tree.body}`;
+    return {
+        func: "text",
+        text: tree.body
+    };
 };
-
-function build_typst_function(functionName, args) {
-    let argsStrArray = [];
-
-    if (!args || args.length === 0) {
-        return '';
-    }
-
-    if (typeof args === 'string') {
-        return `${functionName}( ${args} )`;
-    }
-
-    args.forEach(arg => {
-        if (typeof arg === 'string') {
-            if (arg.trim() === '') {
-                argsStrArray.push('( )');
-            } else {
-                argsStrArray.push(arg);
-            }
-        } else if (Array.isArray(arg) && arg.length === 2) {
-            const [key, value] = arg;
-            if (value.trim() != '') {
-                argsStrArray.push(`${key}: ${value}`);
-            }
-        }
-    });
-
-    if (argsStrArray.length === 0) {
-        return '';
-    }
-
-    const argsStr = argsStrArray.join(' , ');
-
-    return `${functionName}( ${argsStr} )`;
-}
 
 
 function build_typst_mat(array, delim, msg) {
-    var body_typ = "";
-    var body = array.body;
-
-    body_typ = body.map(
+    var rows = array.body.map(
         row => row.map(
             cell => build_expression(cell, msg)
-        ).join(" , ")
-    ).join(" ; ");
+        )
+    )
 
-    if (delim && delim != "\"(\"") {
-        var delim_typ = `delim: ${delim}`;
-        return `mat( ${delim_typ} , ${body_typ} )`;
+    return {
+        func: "mat",
+        ...delim && delim != "(" && {
+            delim: [
+                delim, getMatchingBracket(delim)
+            ]
+        },
+        rows: rows
     }
-    return `mat( ${body_typ} )`;
 }
 
 function build_typst_vec(array, delim, msg) {
-    var body_typ = "";
-    var body = array.body;
-
-    body_typ = body.map(
+    var children = array.body.map(
         row => build_expression(row[0], msg)
-    ).join(" , ");
+    );
 
-    if (delim && delim != "\"(\"") {
-        var delim_typ = `delim: ${delim}`;
-        return `vec( ${delim_typ} , ${body_typ} )`;
+    return {
+        func: "vec",
+        ...delim && delim != "(" && {
+            delim: [
+                delim, getMatchingBracket(delim)
+            ]
+        },
+        children: children
     }
-    return `vec( ${body_typ} )`;
 }
 
 function build_typst_cases(array, delim, rev, msg) {
-    var param = "";
-    if (!(delim === `"{"` || delim === `"}"`)) {
-        param += `delim: ${delim} , `;
-    }
-    if (rev) {
-        param += `reverse: #true , `;
-    }
-
-    param += array.body.map(
+    var children = array.body.map(
         row => row.map(
             cell => build_expression(cell, msg)
-        ).join(" & ")
-    ).join(" , ");
+        )
+    );
 
-    return `cases( ${param} )`;
-}
-
-function build_typst_autolr(left, right, body, msg) {
-    const pairs = [
-        { lefts: ['(', '[', '{'], rights: [')', ']', '}'], format: (body, l, r) => `${l} ${body} ${r}`, in_function: false },
-        { lefts: ['\\lbrack'], rights: ['\\rbrack'], format: (body) => `[ ${body} ]`, in_function: false },
-        { lefts: ['\\{'], rights: ['\\}'], format: (body) => `{ ${body} }`, in_function: false },
-        { lefts: ['|', '\\vert', '\\lvert'], rights: ['|', '\\vert', '\\rvert'], format: (body) => `abs( ${body} )`, in_function: true },
-        { lefts: ['\\|', '\\Vert'], rights: ['\\|', '\\Vert'], format: (body) => `norm( ${body} )`, in_function: true },
-        { lefts: ['\\lfloor'], rights: ['\\rfloor'], format: (body) => `floor( ${body} )`, in_function: true },
-        { lefts: ['\\lceil'], rights: ['\\rceil'], format: (body) => `ceil( ${body} )`, in_function: true },
-        { lefts: ['\\lfloor'], rights: ['\\rceil'], format: (body) => `round( ${body} )`, in_function: true },
-    ];
-
-    for (const pair of pairs) {
-        if (pair.lefts.includes(left) && pair.rights.includes(right)) {
-            var body_typ = build_expression(body, pair.msg);
-            return [true, pair.format(body_typ, left, right)];
-        }
+    return {
+        func: "cases",
+        ...delim && delim != "(" && {
+            delim: [
+                delim, getMatchingBracket(delim)
+            ]
+        },
+        children: children
     }
-
-    return [false, null];
 }
 
 function build_typst_upright_or_str(tree, msg) {
     const ordTypes = ['mathord', 'textord', 'spacing', 'atom'];
+    const dif = {
+        func: "sequence",
+        children: [
+            {
+                func: "h",
+                amount: "0.17em",
+                weak: true
+            },
+            {
+                func: "styled",
+                child: {
+                    "func": "text",
+                    "text": "d"
+                },
+                styles: JSON.stringify([
+                    {
+                        type: "property",
+                        style: {
+                            italic: false
+                        },
+                    }
+                ]),
+            }
+        ]
+    };
 
     let body = null;
     let allOrd = false;
@@ -851,31 +912,44 @@ function build_typst_upright_or_str(tree, msg) {
             }).join('');
 
             if (operators.includes(mergedText)) {
-                return mergedText;
+                return {
+                    func: "text",
+                    text: mergedText
+                };
             }
 
             if (mergedText.length > 1) {
-                return `"${mergedText}"`;
+                return {
+                    func: "text",
+                    text: mergedText
+                };
             }
 
             if (mergedText === "d") {
-                return "dif";
+                return dif;
             }
         }
 
-        const mergedText = body.map(element => {
-            return build_expression(element, msg);
-        }).join(' ');
-        return build_typst_function("upright", mergedText);
+        return {
+            func: "styled",
+            styles: JSON.stringify([
+                {
+                    type: "property",
+                    style: {
+                        italic: false
+                    },
+                }
+            ]),
+            child: build_expression(body, msg)
+        };
     } else if ("text" in tree.body && tree.body.text === "d") {
-        return "dif";
+        return dif;
     }
 }
 
 
 function build_array(tree, msg) {
     let result = [];
-    let buffer_number = [];
 
     for (let i = 0; i < tree.length; i++) {
         if (tree[i].type === 'textord' && isDigitOrDot(tree[i].text)) {
@@ -888,15 +962,14 @@ function build_array(tree, msg) {
             }
 
             let numbers = tree.slice(i, j + 1);
-            result.push(numbers.map(number => build_expression(number, msg)).join(""));
+            result.push({
+                func: "text",
+                text: numbers.map(number => build_expression(number, msg)).join("")
+            });
             i = j; // skip
         }
         else if (tree[i].type === 'atom' && tree[i].family === 'open') {
             // opening and closing
-            if (buffer_number.length > 0) {
-                result.push(buffer_number.map(number => build_expression(number, msg)).join(""));
-                buffer_number = [];
-            }
 
             // find close
             let openBracket = tree[i].text;
@@ -916,11 +989,30 @@ function build_array(tree, msg) {
             if (bracketCount === 0) {
                 // found
                 let innerContent = build_array(tree.slice(i + 1, j), msg);
-                result.push(openBracket + " " + innerContent + " " + closeBracket);
+                result.push({
+                    func: "lr",
+                    body: {
+                        func: "sequence",
+                        children: [
+                            {
+                                func: "text",
+                                text: openBracket
+                            },
+                            innerContent,
+                            {
+                                func: "text",
+                                text: closeBracket
+                            }
+                        ]
+                    }
+                });
                 i = j; // skip
             } else {
                 // not found
-                result.push(build_expression(tree[i], msg));
+                var r = build_expression(tree[i], msg);
+                if (r) {
+                    result.push(r);
+                }
             }
         } else if (tree[i].type === 'htmlmathml') {
             // rlap
@@ -929,7 +1021,10 @@ function build_array(tree, msg) {
                     if (i + 1 < tree.length && tree[i + 1].type === 'atom') {
                         const negatedSymbol = negationMap[tree[i + 1].text];
                         if (negatedSymbol) {
-                            result.push(negatedSymbol);
+                            result.push({
+                                func: "text",
+                                text: negatedSymbol
+                            });
                         } else {
                             msg.warn(`The negate of ${tree[i + 1].text} is not recognized.`);
                         }
@@ -939,13 +1034,18 @@ function build_array(tree, msg) {
                     }
                 }
             }
-            result.push(build_expression(tree[i], msg));
+            var r = build_expression(tree[i], msg)
+            if (r) {
+                result.push(r);
+            }
         } else {
-            result.push(build_expression(tree[i], msg));
+            var r = build_expression(tree[i], msg)
+            if (r) {
+                result.push(r);
+            }
         }
     }
 
-    // return result.join(' ');
     return {
         func: "sequence",
         children: result,
@@ -962,11 +1062,11 @@ export function build_expression(tree, msg) {
             return build_functions[tree.type](tree, msg);
         } else {
             msg.warn(`The tree type "${tree.type}" is not recognized.`);
-            return "";
+            return null;
         }
     } else {
         // null
         msg.warn(`Null tree!`);
-        return "zws";
+        return null;
     }
 }
