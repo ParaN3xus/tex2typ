@@ -177,7 +177,7 @@ build_functions.genfrac = function (tree, msg) {
         return {
             func: "binom",
             upper: numer,
-            lower: denom
+            lower: [denom]
         };
     }
 };
