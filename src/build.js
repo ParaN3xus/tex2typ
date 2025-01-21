@@ -789,7 +789,7 @@ build_functions.hphantom = function (tree, msg) {
 build_functions.pmb = function (tree, msg) {
     return {
         func: "styled",
-        body: build_expression(tree.body, msg),
+        child: build_expression(tree.body, msg),
         styles: JSON.stringify([
             {
                 type: "property",
