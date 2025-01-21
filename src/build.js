@@ -927,7 +927,7 @@ function build_typst_upright_or_str(tree, msg) {
             if (operators.includes(mergedText)) {
                 return {
                     func: "op",
-                    body: {
+                    text: {
                         func: "text",
                         text: mergedText
                     }
