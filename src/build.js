@@ -81,10 +81,13 @@ build_functions.text = function (tree, msg) {
 
         if (allLiteral) {
             // TODO: not all texord but continuous occur
-            mergedText = tree.body.map(element => build_expression(element, msg)).join('');
+            mergedText = tree.body.map(element => build_expression(element, msg).text).join('');
 
             if (mergedText.length > 1) {
-                return `"${mergedText}"`;
+                return {
+                    func: "text",
+                    text: mergedText
+                }
             }
         }
         return {
@@ -543,7 +546,7 @@ build_functions.font = function (tree, msg) {
         if (allMathord) {
             const allLiteral = tree.body.body.every(element => !element.text.startsWith("\\"));
             if (allLiteral) {
-                const mergedText = tree.body.body.map(element => element.text).join('');
+                const mergedText = tree.body.body.map(element => build_expression(element, msg).text).join('');
                 if (mergedText.length > 1) {
                     return {
                         func: "styled",
