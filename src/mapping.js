@@ -431,9 +431,9 @@ export const relMapping = {
 
 export const binMapping = {
     "+": "+",
-    "-": "-",
+    "-": "−",
     "±": "±",
-    "−": "-",
+    "−": "−",
     "×": "×",
     "*": "*",
     "⊗": "⊗",

@@ -611,6 +611,7 @@ build_functions.font = function (tree, msg) {
 
 
     if (fontCommand in fontStyleMapping) {
+        var child = build_expression(tree.body, msg)
         return {
             func: "styled",
             styles: JSON.stringify([
@@ -619,7 +620,7 @@ build_functions.font = function (tree, msg) {
                     style: fontStyleMapping[fontCommand]
                 }
             ]),
-            child: build_expression(tree.body, msg)
+            child: child ? child : { func: "text", text: "" }
         }
     }
 
