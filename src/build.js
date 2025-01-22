@@ -1,4 +1,4 @@
-import { functionalAccentMappint, negationMapping, xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
+import { typstOpMapping, functionalAccentMappint, negationMapping, xArrowMapping, fontMapping, textordMapping, mathordMapping, accentMapping, atomMapping, opMapping, relMapping, lrMapping } from './mapping.js';
 import { decodeLatexEscape, encodeTypstFunctionEscape, encodeTypstEscape } from "./escape.js";
 import { isDigitOrDot, getSingleBody, getMatchingBracket, insertBetween } from "./utils.js";
 
@@ -490,14 +490,6 @@ build_functions.spacing = function (tree, msg) {
     return null
 };
 
-
-const operators = [
-    "arccos", "arcsin", "arctan", "arg", "cos", "cosh", "cot", "coth", "csc",
-    "csch", "ctg", "deg", "det", "dim", "exp", "gcd", "hom", "id", "im", "inf",
-    "ker", "lg", "lim", "liminf", "limsup", "ln", "log", "max", "min", "mod",
-    "Pr", "sec", "sech", "sin", "sinc", "sinh", "sup", "tan", "tanh", "tg", "tr"
-];
-
 build_functions.op = function (tree, msg) {
     if (tree.name in opMapping) {
         return opMapping[tree.name];
@@ -940,14 +932,8 @@ function build_typst_upright_or_str(tree, msg) {
                 }
             }).join('');
 
-            if (operators.includes(mergedText)) {
-                return {
-                    func: "op",
-                    text: {
-                        func: "text",
-                        text: mergedText
-                    }
-                };
+            if (mergedText in typstOpMapping) {
+                return typstOpMapping[mergedText];
             }
 
             if (mergedText.length > 1) {
